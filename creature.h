@@ -1,0 +1,78 @@
+﻿#pragma once
+
+#include <cglm\cglm.h>
+
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+
+#include "transform.h"
+#include "sprite.h"
+
+typedef enum
+{
+	MOVCAP_NONE,
+	MOVCAP_GROUND,
+	MOVCAP_FLY
+} MovementCapability;
+
+typedef enum
+{
+	/* No AI */
+	AISTATE_NONE,
+	/* Rare use; just stands still */
+	AISTATE_IDLE,
+	/* Default NPC behavior */
+	AISTATE_ROAM,
+	/* Fleeing from attack_target, will return to chasing/attack after some time */
+	AISTATE_FLEE,
+	/* Stands still; attacks if possible or starts chasing */
+	AISTATE_ATTACKING,
+	/* Chasing the attack_target */
+	AISTATE_CHASING
+} AIState;
+
+/* Used to store parsed LUA data */
+typedef struct
+{
+	const char * name;
+	int health, mana;
+	int attack_dice_count, attack_dice, attack_bonus;
+	MovementCapability movement_capability;
+	const char * sprite_sheet_folder;
+} CreatureData;
+
+/* Anything that can move, attack, cast spells, etc */
+typedef struct Creature
+{
+	Transform transform;
+	vec3 start_pos;
+	
+	Sprite* sprite;
+	struct Creature* attack_target;
+	
+	AIState ai_state;
+	vec3 roam_start_pos;
+	vec3 roam_pos;
+	int health, max_health;
+
+	int mana, max_mana;
+	int attack_dice_count, attack_dice, attack_bonus;
+	char * name;
+	MovementCapability movement_capability;
+	clock_t begin;
+	clock_t roam_clock;
+
+	int dead;
+	// TODO: Abilities, loot, etc...
+} Creature;
+
+void precache_creature(CreatureData);
+void free_precached_creatures();
+
+void construct_creature(Creature**, CreatureData, vec3);
+void destruct_creature(Creature**);
+
+void kill_creature(Creature*);
+
+void update_creature(Creature*);
