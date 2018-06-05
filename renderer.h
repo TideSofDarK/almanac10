@@ -40,7 +40,7 @@ void resize_render_textures(int, int);
 
 int get_sprite_under_cursor(World*, int, int);
 
-void draw_sprite(Sprite*, mat4, mat4, vec3, unsigned int, int);
+void draw_sprite(Sprite*, mat4, mat4, vec3, int, int);
 void draw_creature(Creature*, Camera);
 void draw_projectile(Projectile*, Camera);
 void draw_model(Model*, Camera);

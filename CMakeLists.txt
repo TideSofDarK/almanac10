@@ -5,9 +5,9 @@ set(CMAKE_C_STANDARD 11)
 
 include_directories(
         .
-        C:/Users/tides/Downloads/cglm-master/include
-        C:/Users/tides/Downloads/glad-0.1.20/GL/include
-        C:/Users/tides/Downloads/nuklear-master
+        C:/workspace/libs/cglm/include
+        C:/workspace/libs/nuklear
+        C:/workspace/libs/glad/include
 )
 
 add_executable(almanac10
@@ -59,5 +59,6 @@ add_executable(almanac10
         world.h)
 
 target_link_libraries(almanac10
+        PUBLIC libassimp.dll
         PUBLIC libglfw3
-        PUBLIC libassimp.dll)
+        )

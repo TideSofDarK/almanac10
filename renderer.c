@@ -94,6 +94,7 @@ void init_renderers()
 	model_renderer.render_data = create_quad_render_data(buffer_size, render_texture_vertices); /* Simillar VBO is used for rendering render texture */
 	model_renderer.fb_render_data = create_frame_buffer_render_data(MODEL_RENDERER_SCALE);
 
+	/* TODO: remove later */
 	if (is_grid_constructed() == 0)
 	{
 		construct_grid();
@@ -145,6 +146,11 @@ int get_sprite_under_cursor(World* world, int cx, int cy)
 	/* TODO: check if game is in WORLD state */
 	/* TODO: check if its possible to remake it into FBO */
 	start_sprite_rendering();
+	set_sprite_origin_mode(OM_BOTTOM);
+
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	for (size_t i = 0; i < vector_size(world->creatures); i++)
 	{
 		Creature* creature = world->creatures[i];
@@ -177,7 +183,7 @@ int get_sprite_under_cursor(World* world, int cx, int cy)
 	return (int)fmax(picked_id, 0);
 }
 
-void draw_sprite(Sprite* sprite, mat4 view, mat4 projection, vec3 pos, unsigned int invert, int direction)
+void draw_sprite(Sprite* sprite, mat4 view, mat4 projection, vec3 pos, int invert, int direction)
 {
 	glBindVertexArray(sprite_renderer.render_data[sprite_renderer.mode].VAO);
 
@@ -260,7 +266,7 @@ void draw_model(Model* model, Camera camera)
 
 void draw_world(World* world)
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	reset_opengl_settings();
 	glViewport(0, 0, (GLuint)(get_config().w), (GLuint)(get_config().h));
 
 	/* Draw 2D stuff to buffer; default origin mode is OM_CENTER */
@@ -333,12 +339,10 @@ void display_everything()
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, model_renderer.fb_render_data.texture_id);
-	glGenerateMipmap(GL_TEXTURE_2D);
 	set_uniform_int(model_renderer.render_texture_shader, "texture0", 0);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, sprite_renderer.fb_render_data.texture_id);
-	glGenerateMipmap(GL_TEXTURE_2D);
 	set_uniform_int(model_renderer.render_texture_shader, "texture1", 1);
 
 	glActiveTexture(GL_TEXTURE2);

@@ -4,8 +4,8 @@
 
 #include "config.h"
 
-ButtonState input[GLFW_KEY_LAST-1];
-unsigned int input_map[CT_LAST-1];
+ButtonState input[GLFW_KEY_LAST];
+unsigned int input_map[CT_LAST];
 
 double cursorX, cursorY = 0.0;
 

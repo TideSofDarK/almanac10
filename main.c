@@ -56,7 +56,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void set_window_icon(GLFWwindow *window)
 {
 	int width, height, nr_channels;
-	unsigned char *data = stbi_load("icon.png", &width, &height, &nr_channels, STBI_rgb_alpha);
+	unsigned char *data = stbi_load("assets/icon.png", &width, &height, &nr_channels, STBI_rgb_alpha);
 
 	GLFWimage* image = malloc(sizeof(GLFWimage));
 	if (image != NULL)
@@ -75,8 +75,8 @@ int main(int argc, char *argv[])
 	srand((unsigned int)time(NULL));
 
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
-	//glfwSwapInterval(1);
+	glfwSwapInterval(1);
 	set_window_icon(window);
 
 	/* Check if GL functions are loaded */
@@ -127,7 +127,12 @@ int main(int argc, char *argv[])
 	minotaur_data.sprite_sheet_folder = "minotaur";
 	minotaur_data.movement_capability = MOVCAP_GROUND;
 
-	spawn_creature(world1, minotaur_data, (vec3) { 0.0f, 0.0f, 0.0f });
+/*    for (int i = 0; i < 10; i++)
+    {
+        spawn_creature(world1, minotaur_data, (vec3) {(6.0f / 25.0f * (float)i) - 3.0f, 0.0f, 0.0f });
+    }*/
+
+    spawn_creature(world1, minotaur_data, (vec3) { 0.0f, 0.0f, 0.0f });
 
 	//spawn_creature(world1, black_dragon_data, (vec3) { 0.0f, 0.5f, 0.0f });
 
@@ -152,8 +157,6 @@ int main(int argc, char *argv[])
 		}
 		frames++;
 
-		reset_opengl_settings();
-
 		World* world = NULL;
 		active_world(&world);
 		if (world == NULL)
@@ -162,7 +165,7 @@ int main(int argc, char *argv[])
 		/* Determine cursor target */
 		double cx, cy;
 		glfwGetCursorPos(window, &cx, &cy);
-		int sprite_under_cursor = -1;// get_sprite_under_cursor(world, (int)cx, (int)cy);
+		int sprite_under_cursor = get_sprite_under_cursor(world, (int)cx, (int)cy);
 
 		/* Process input and update world */
 		glfwPollEvents();
