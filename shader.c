@@ -12,7 +12,7 @@
 #define GEOMETRY 2
 #define FRAGMENT 3
 
-void load_shader_from_file(GLchar ** dest, const char * shader)
+static inline void load_shader_from_file(GLchar ** dest, const char * shader)
 {
     GLchar *full_path = malloc(MAXLEN);
 	snprintf(full_path, MAXLEN, "assets/shaders/%s", shader);
@@ -21,7 +21,7 @@ void load_shader_from_file(GLchar ** dest, const char * shader)
     free(full_path);
 }
 
-void check_compile_errors(GLuint shader, int type)
+static inline void check_compile_errors(GLuint shader, int type)
 {
 	GLint success;
 	GLchar infoLog[1024];
@@ -55,6 +55,10 @@ void construct_shader(Shader **_shader, const char * vertex_shader_filename, con
     shader->fragment_shader_source  = NULL;
     load_shader_from_file(&shader->fragment_shader_source, fragment_shader_filename);
 	shader->geometry_shader_source  = NULL;
+    if (geometry_shader_filename != NULL)
+    {
+        shader->geometry_shader_source = load_string_from_file(geometry_shader_filename);
+    }
 
 	int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex_shader, 1, (const GLchar * const*)&shader->vertex_shader_source, NULL);
@@ -66,10 +70,9 @@ void construct_shader(Shader **_shader, const char * vertex_shader_filename, con
 	glCompileShader(fragment_shader);
 	check_compile_errors(fragment_shader, FRAGMENT);
 
-	unsigned int geometry_shader;
+	int geometry_shader = 0;
 	if (geometry_shader_filename != NULL)
 	{
-		shader->geometry_shader_source = load_string_from_file(geometry_shader_filename);
 		geometry_shader = glCreateShader(GL_GEOMETRY_SHADER);
 		glShaderSource(geometry_shader, 1, (const GLchar * const*)&shader->geometry_shader_source, NULL);
 		glCompileShader(geometry_shader);
@@ -83,6 +86,12 @@ void construct_shader(Shader **_shader, const char * vertex_shader_filename, con
 		glAttachShader(shader->ID, geometry_shader);
 	glLinkProgram(shader->ID);
 	check_compile_errors(shader->ID, PROGRAM);
+
+	glDetachShader(shader->ID, vertex_shader);
+    glDetachShader(shader->ID, fragment_shader);
+    if (geometry_shader_filename != NULL)
+        glDetachShader(shader->ID, geometry_shader);
+
 	glDeleteShader(vertex_shader);
 	glDeleteShader(fragment_shader);
 	if (geometry_shader_filename != NULL)
@@ -93,7 +102,7 @@ void destruct_shader(Shader** _shader)
 {
 	Shader *shader = *_shader;
 
-	glDeleteShader(shader->ID);
+    glDeleteProgram(shader->ID);
 
 	free(shader->vertex_shader_source);
 	free(shader->fragment_shader_source);
