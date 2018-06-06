@@ -6,6 +6,8 @@
 #include "vertices.h"
 #include "config.h"
 #include "grid.h"
+#include "object.h"
+#include "world.h"
 
 /* Global state */
 SpriteRenderer sprite_renderer;
@@ -68,7 +70,7 @@ FrameBufferRenderData create_frame_buffer_render_data(float scale)
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, frame_buffer_render_data.texture_id, 0);
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, frame_buffer_render_data.depth_id, 0);
 	GLenum DrawBuffers[2] = { GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT };
-	glDrawBuffers(2, DrawBuffers);
+	//glDrawBuffers(2, DrawBuffers);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	return frame_buffer_render_data;
@@ -183,7 +185,7 @@ int get_sprite_under_cursor(World* world, int cx, int cy)
 	return (int)fmax(picked_id, 0);
 }
 
-void draw_sprite(Sprite* sprite, mat4 view, mat4 projection, vec3 pos, int invert, int direction)
+static inline void draw_sprite(Sprite* sprite, Camera camera, vec3 pos, int invert, int direction)
 {
 	glBindVertexArray(sprite_renderer.render_data[sprite_renderer.mode].VAO);
 
@@ -201,8 +203,8 @@ void draw_sprite(Sprite* sprite, mat4 view, mat4 projection, vec3 pos, int inver
 	}
 	glBindTexture(GL_TEXTURE_2D, ID);
 
-	set_uniform_mat4(sprite_renderer.shader, "view", view);
-	set_uniform_mat4(sprite_renderer.shader, "projection", projection);
+	set_uniform_mat4(sprite_renderer.shader, "view", camera.view);
+	set_uniform_mat4(sprite_renderer.shader, "projection", camera.projection);
 	set_uniform_vec3(sprite_renderer.shader, "pos", pos);
 	set_uniform_float(sprite_renderer.shader, "aspectRatio", (float)sprite->w / (float)sprite->h);
 	set_uniform_int(sprite_renderer.shader, "sheetPosition", sprite->sheet_position);
@@ -212,48 +214,21 @@ void draw_sprite(Sprite* sprite, mat4 view, mat4 projection, vec3 pos, int inver
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void draw_creature(Creature* creature, Camera camera)
+static inline void draw_mesh(Mesh* mesh, Camera camera)
 {
-	if (creature == NULL)
-		return;
-
-	Transform sprite_transform = creature->transform;
-
-	int index = determine_orientation(creature->transform, camera);
-
-	draw_sprite(creature->sprite, camera.view, camera.projection, sprite_transform.pos, index > 0, abs(index));
-}
-
-void draw_projectile(Projectile* projectile, Camera camera)
-{
-	if (projectile == NULL)
-		return;
-
-	Transform projectile_transform = projectile->transform;
-
-	draw_sprite(projectile->sprite, camera.view, camera.projection, projectile_transform.pos, 0, 0);
-}
-
-void draw_mesh(Mesh* mesh, Camera camera)
-{
-	mat4 model;
-	glm_mat4_identity(model);
-	glm_scale(model, (vec3) { 0.01f, 0.01f, 0.01f });
-	
 	glActiveTexture(GL_TEXTURE0);
 	set_uniform_int(model_renderer.shader, "texture_diffuse1", 0);
 	glBindTexture(GL_TEXTURE_2D, mesh->texture->ID);
 
 	set_uniform_mat4(model_renderer.shader, "view", camera.view);
 	set_uniform_mat4(model_renderer.shader, "projection", camera.projection);
-	set_uniform_mat4(model_renderer.shader, "model", model);
 
 	glBindVertexArray(mesh->render_data.VAO);
 	glDrawElements(GL_TRIANGLES, (unsigned int)vector_size(mesh->indices), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
-void draw_model(Model* model, Camera camera)
+static inline void draw_model(Model* model, Camera camera)
 {
 	for (unsigned int i = 0; i < vector_size(model->meshes); i++)
 	{
@@ -262,6 +237,42 @@ void draw_model(Model* model, Camera camera)
 			draw_mesh(model->meshes[i], camera);
 		}
 	}
+}
+
+void draw_creature(Creature* creature, Camera camera)
+{
+	assert(creature != NULL);
+
+	Transform sprite_transform = creature->transform;
+
+	int index = determine_orientation(creature->transform, camera);
+
+	draw_sprite(creature->sprite, camera, sprite_transform.pos, index > 0, abs(index));
+}
+
+void draw_projectile(Projectile* projectile, Camera camera)
+{
+	assert(projectile != NULL);
+
+	Transform projectile_transform = projectile->transform;
+
+	draw_sprite(projectile->sprite, camera, projectile_transform.pos, 0, 0);
+}
+
+void draw_object3d(Object3D* object3d, Camera camera)
+{
+	assert(object3d != NULL);
+
+	mat4 model;
+	glm_mat4_identity(model);
+	glm_translate(model, object3d->transform.pos);
+	glm_scale(model, (vec3) { 0.01f, 0.01f, 0.01f });
+
+	/* TODO: grid forces me to do this; probably will have to remove it later */
+	use_shader(model_renderer.shader);
+	set_uniform_mat4(model_renderer.shader, "model", model);
+
+	draw_model(object3d->model, camera);
 }
 
 void draw_world(World* world)
@@ -273,14 +284,12 @@ void draw_world(World* world)
 	start_sprite_rendering();
 	for (size_t i = 0; i < vector_size(world->projectiles); i++)
 	{
-		if (world->projectiles[i] != NULL)
-			draw_projectile(world->projectiles[i], world->camera);
+		draw_projectile(world->projectiles[i], world->camera);
 	}
 	set_sprite_origin_mode(OM_BOTTOM);
 	for (size_t i = 0; i < vector_size(world->creatures); i++)
 	{
-		if (world->creatures[i] != NULL)
-			draw_creature(world->creatures[i], world->camera);
+		draw_creature(world->creatures[i], world->camera);
 	}
 	finish_sprite_rendering();
 
@@ -288,7 +297,10 @@ void draw_world(World* world)
 	start_model_rendering();
 	/* TODO: refactor grid things */
 	draw_grid();
-	//draw_model(model, world->camera);
+	for (size_t i = 0; i < vector_size(world->objects3d); i++)
+	{
+		draw_object3d(world->objects3d[i], world->camera);
+	}
 	finish_model_rendering();
 
 	/* Merge them using depth buffers */
@@ -364,7 +376,7 @@ void display_everything()
 void reset_opengl_settings()
 {
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LINE_SMOOTH);
+	//glEnable(GL_LINE_SMOOTH);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -372,7 +384,7 @@ void reset_opengl_settings()
 	glDepthRange(0, 1);
 	glDepthFunc(GL_LEQUAL);
 
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	//glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
 	glClearStencil(0);
 	glClearDepth(1.0f);

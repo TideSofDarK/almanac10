@@ -9,6 +9,7 @@
 #include "sprite.h"
 #include "creature.h"
 #include "projectile.h"
+#include "object.h"
 
 typedef struct
 {
@@ -21,6 +22,9 @@ typedef struct
 	Creature** creatures;
 	unsigned int* creatures_to_remove;
 
+    Object3D** objects3d;
+    unsigned int* objects3d_to_remove;
+
 	char * name;
 
 	lua_State * L;
@@ -29,6 +33,7 @@ typedef struct
 void construct_world(World**, const char*);
 void destruct_world(World**);
 
+void insert_object3d(World*, Object3D*);
 void insert_projectile(World*, Projectile*);
 Creature* spawn_creature(World*, const char *, vec3);
 void creature_by_index(Creature**, World*, unsigned int);

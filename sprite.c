@@ -20,12 +20,12 @@ static const int DIR_INDICES[] = {
 	-DIR_NE
 };
 
-void particle_path(char ** dest, const char * particle)
+static inline void particle_path(char ** dest, const char * particle)
 {
 	snprintf(*dest, MAXLEN, "assets/particles/%s.png", particle);
 }
 
-void creature_sheet_path(char ** dest, const char * folder, const char * state, int dir)
+static inline void creature_sheet_path(char ** dest, const char * folder, const char * state, int dir)
 {
 	snprintf(*dest, MAXLEN, "assets/creatures/%s/%s%s%s%s%i.png", folder, folder, "_", state, "_", dir);
 }
@@ -103,10 +103,10 @@ void update_sprite(Sprite* sprite)
 	if (sprite->anim_state != ANIM_NONE && sprite->begin)
 	{
 		/* Check if animation should not be looped */
-		unsigned int sheet_length = get_sheet_length(sprite);
+		int sheet_length = get_sheet_length(sprite);
 		if (sprite->anim_state >= 0 || sprite->sheet_position < sheet_length - 1)
 		{
-			sprite->sheet_position = (int)(floorf(fmodf(lifetime * sprite->anim_speed, 1.0) * (float)sheet_length));
+			sprite->sheet_position = (unsigned int)(floorf(fmodf(lifetime * sprite->anim_speed, 1.0) * (float)sheet_length));
 		}
 		else
 		{

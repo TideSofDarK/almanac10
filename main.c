@@ -125,9 +125,16 @@ int main(int argc, char *argv[])
         spawn_creature(world1, minotaur_data, (vec3) {(6.0f / 25.0f * (float)i) - 3.0f, 0.0f, 0.0f });
     }*/
 
-    spawn_creature(world1, "minotaur", (vec3) { 1.0f, 0.0f, 0.0f });
+	Model* model = NULL;
+	construct_model("props/spider/spider", &model);
 
-	//spawn_creature(world1, black_dragon_data, (vec3) { 0.0f, 0.5f, 0.0f });
+	Object3D * spider = NULL;
+	construct_object3d(&spider, model);
+    insert_object3d(world1, spider);
+
+	translate_pos_vec3((Transform*)spider, (vec3) { 0.0f, 0.5f, 0.0f });
+
+	spawn_creature(world1, "minotaur", (vec3) { 1.0f, 0.0f, 0.0f });
 
 	/* Delta time calculations */
 	float last_frame	= 0.0f;

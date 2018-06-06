@@ -11,8 +11,19 @@
 #include "script.h"
 #include "creature.h"
 
-#define clean_up(to_remove, things, deconstruct)						\
+/* Macros to clean up creatures, projectiles and so on */
+#define clean_up(to_remove, things, deconstruct, all)					\
 do {																	\
+	if (all == 1)														\
+	{																	\
+		vector_free(to_remove);											\
+		if (things != NULL && !vector_empty(things))					\
+		{																\
+			for (size_t i = 0; i < vector_size(things); ++i) {			\
+				vector_push_back(to_remove, i);							\
+			}															\
+		}																\
+	}																	\
 	if (to_remove != NULL && !vector_empty(to_remove))					\
 	{																	\
 		for (size_t i = 0; i < vector_size(to_remove); ++i) {			\
@@ -23,10 +34,7 @@ do {																	\
 		vector_free(to_remove);											\
 		to_remove = NULL;												\
 	}																	\
-} while(0);
-
-/* TO REMOVE */
-Model* model = NULL;
+} while(0)
 
 void construct_world(World ** _world, const char * name)
 {
@@ -39,40 +47,34 @@ void construct_world(World ** _world, const char * name)
 	world->projectiles = NULL;
 	world->projectiles_to_remove = NULL;
 
+	world->objects3d = NULL;
+	world->objects3d_to_remove = NULL;
+
 	world->camera = create_camera();
 
 	world->name = _strdup(name);
 
 	construct_world_lua_state(&world->L);
-
-	//construct_model("spider.obj", &model);
 }
 
 void destruct_world(World ** _world)
 {
 	World *world = *_world;
 
-	for (size_t i = 0; i < vector_size(world->creatures); i++)
-	{
-		/* TODO: improve texture freeing */
-		destruct_creature(&world->creatures[i]);
-	}
-
-	vector_free(world->creatures);
-	vector_free(world->creatures_to_remove);
+	clean_up(world->projectiles_to_remove, world->projectiles, destruct_projectile, 1);
+	clean_up(world->creatures_to_remove, world->creatures, destruct_creature, 1);
+	clean_up(world->objects3d_to_remove, world->objects3d, destruct_object3d, 1);
 
 	free(world->name);
 	world->name = NULL;
 
-	/* TO REMOVE */
-	if (model != NULL)
-	{
-		destruct_model(&model);
-		model = NULL;
-	}
-
 	free(*_world);
 	*_world = NULL;
+}
+
+void insert_object3d(World* world, Object3D* object3d)
+{
+	vector_push_back(world->objects3d, object3d);
 }
 
 void insert_projectile(World* world, Projectile* projectile)
@@ -80,6 +82,7 @@ void insert_projectile(World* world, Projectile* projectile)
 	vector_push_back(world->projectiles, projectile);
 }
 
+/* TODO: maybe we should move this code somewhere else and leave only insert_creature thingy */
 Creature* spawn_creature(World* world, const char * name, vec3 pos)
 {
 	static unsigned int creature_index;
@@ -121,8 +124,9 @@ void update_world(World* world, float delta_time)
 		return;
 
 	/* Clean up things using macro */
-	clean_up(world->projectiles_to_remove, world->projectiles, destruct_projectile)
-	clean_up(world->creatures_to_remove, world->creatures, destruct_creature)
+	clean_up(world->projectiles_to_remove, world->projectiles, destruct_projectile, 0);
+	clean_up(world->creatures_to_remove, world->creatures, destruct_creature, 0);
+	clean_up(world->objects3d_to_remove, world->objects3d, destruct_object3d, 0);
 
 	/* Update projectiles */
 	if (world->projectiles != NULL && !vector_empty(world->projectiles))

@@ -2,6 +2,11 @@
 
 #include "util.h"
 
+static inline void obj_path(char ** dest, const char * path)
+{
+	snprintf(*dest, MAXLEN, "assets/models/%s.obj", path);
+}
+
 void process_mesh(const aiScene* ai_scene, aiMesh* ai_mesh, Model* model, Mesh** _mesh)
 {
 	/* Vertices, normals, texcoords, indices */
@@ -50,13 +55,9 @@ void process_mesh(const aiScene* ai_scene, aiMesh* ai_mesh, Model* model, Mesh**
 		aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &str, NULL, NULL, NULL, NULL, NULL, NULL);
 	}
 
-	char * filename = _strdup(str.data);
-
 	Texture* texture = NULL;
-	cached_texture(filename, &texture);
+	cached_texture(str.data, &texture);
 	construct_mesh(vertices, indices, texture, _mesh);
-
-	free(filename);
 }
 
 void process_node(Model* model, aiNode *node, const aiScene *scene)
@@ -74,17 +75,22 @@ void process_node(Model* model, aiNode *node, const aiScene *scene)
 	}
 }
 
-void construct_model(const char* filename, Model** _model)
+void construct_model(const char* folder, Model** _model)
 {
 	*_model = malloc(sizeof(Model));
 	Model *model = *_model;
 
 	model->meshes = NULL;
 
+	char * filename = malloc(MAXLEN);
+	obj_path(&filename, folder);
+
 	const aiScene* ai_scene = aiImportFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs);
 	process_node(*_model, ai_scene->mRootNode, ai_scene);
 
 	aiReleaseImport(ai_scene);
+
+	free(filename);
 }
 
 void destruct_model(Model** _model)
