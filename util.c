@@ -6,6 +6,13 @@
 #include <string.h>
 #include <malloc.h>
 
+char* util_strcat( char* dest, char* src )
+{
+	while (*dest) dest++;
+	while (*dest++ = *src++);
+	return --dest;
+}
+
 char* load_string_from_file(const char* filename)
 {
 	FILE* f;

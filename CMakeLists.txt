@@ -3,11 +3,20 @@ project(almanac10 C)
 
 set(CMAKE_C_STANDARD 11)
 
+find_package(assimp REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(lua REQUIRED)
+
 include_directories(
         .
         C:/workspace/libs/cglm/include
         C:/workspace/libs/nuklear
         C:/workspace/libs/glad/include
+        C:/workspace/libs/LuaAutoC/include
+)
+
+link_directories(
+        C:/workspace/libs/LuaAutoC/lib
 )
 
 add_executable(almanac10
@@ -56,9 +65,12 @@ add_executable(almanac10
         vertices.c
         vertices.h
         world.c
-        world.h)
+        world.h
+        almanac10.rc)
 
 target_link_libraries(almanac10
-        PUBLIC libassimp.dll
-        PUBLIC libglfw3
+        assimp
+        glfw
+        lautoc
+        lua
         )

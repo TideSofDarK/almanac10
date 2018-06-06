@@ -35,11 +35,12 @@ typedef enum
 /* Used to store parsed LUA data */
 typedef struct
 {
-	const char * name;
+	char * script_name;
+	char * name;
 	int health, mana;
 	int attack_dice_count, attack_dice, attack_bonus;
 	MovementCapability movement_capability;
-	const char * sprite_sheet_folder;
+	char * sprite_sheet_folder;
 } CreatureData;
 
 /* Anything that can move, attack, cast spells, etc */
@@ -64,10 +65,11 @@ typedef struct Creature
 	clock_t roam_clock;
 
 	int dead;
+	unsigned int index;
 	// TODO: Abilities, loot, etc...
 } Creature;
 
-void precache_creature(CreatureData);
+CreatureData get_precached_creature_data(const char*);
 void free_precached_creatures();
 
 void construct_creature(Creature**, CreatureData, vec3);

@@ -120,19 +120,12 @@ int main(int argc, char *argv[])
 	init_renderers();
 	init_input();
 
-	CreatureData minotaur_data;// = parse_lua_creature("scripts/c_minotaur.lua");
-	//CreatureData black_dragon_data = parse_lua_creature("scripts/c_black_dragon.lua");
-
-	minotaur_data.name = "Minotaur";
-	minotaur_data.sprite_sheet_folder = "minotaur";
-	minotaur_data.movement_capability = MOVCAP_GROUND;
-
 /*    for (int i = 0; i < 10; i++)
     {
         spawn_creature(world1, minotaur_data, (vec3) {(6.0f / 25.0f * (float)i) - 3.0f, 0.0f, 0.0f });
     }*/
 
-    spawn_creature(world1, minotaur_data, (vec3) { 0.0f, 0.0f, 0.0f });
+    spawn_creature(world1, "minotaur", (vec3) { 1.0f, 0.0f, 0.0f });
 
 	//spawn_creature(world1, black_dragon_data, (vec3) { 0.0f, 0.5f, 0.0f });
 

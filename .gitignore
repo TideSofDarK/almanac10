@@ -50,3 +50,7 @@ fabric.properties
 
 # Editor-based Rest Client
 .idea/httpRequests
+
+# Windows trash
+*.res
+*.aps

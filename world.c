@@ -8,6 +8,8 @@
 #include "config.h"
 #include "renderer.h"
 #include "input.h"
+#include "script.h"
+#include "creature.h"
 
 #define clean_up(to_remove, things, deconstruct)						\
 do {																	\
@@ -40,6 +42,8 @@ void construct_world(World ** _world, const char * name)
 	world->camera = create_camera();
 
 	world->name = _strdup(name);
+
+	construct_world_lua_state(&world->L);
 
 	//construct_model("spider.obj", &model);
 }
@@ -76,13 +80,39 @@ void insert_projectile(World* world, Projectile* projectile)
 	vector_push_back(world->projectiles, projectile);
 }
 
-Creature* spawn_creature(World* world, CreatureData creature_data, vec3 pos)
+Creature* spawn_creature(World* world, const char * name, vec3 pos)
 {
+	static unsigned int creature_index;
+	creature_index++;
+
+	CreatureData creature_data = get_precached_creature_data(name);
+
 	Creature* creature = NULL;
 	construct_creature(&creature, creature_data, pos);
+	creature->index = creature_index;
 	vector_push_back(world->creatures, creature);
 
+	script_insert_creature(world->L, creature_data.script_name, creature_index);
+
 	return creature;
+}
+
+void creature_by_index(Creature** _creature, World* world, unsigned int index)
+{
+	if (world->creatures != NULL && !vector_empty(world->creatures))
+	{
+		for (size_t i = 0; i < vector_size(world->creatures); ++i) {
+			Creature* creature = world->creatures[i];
+			if (creature != NULL)
+			{
+				if (creature->index == index)
+				{
+					*_creature = world->creatures[i];
+					return;
+				}
+			}
+		}
+	}
 }
 
 void update_world(World* world, float delta_time)
@@ -141,23 +171,8 @@ void update_world(World* world, float delta_time)
 			Creature* creature = world->creatures[i];
 			if (creature != NULL)
 			{
-				if (strcmp(creature->name, "Dragon") == 0)
-				{
-					float lifetime = (float)(clock() - creature->begin) / CLOCKS_PER_SEC;
-					float normalized = fmodf(lifetime, (float)M_PI * 2.0f);
-
-					glm_vec3((vec3) {
-						cosf(normalized) / 1.0f,
-						cosf(normalized) / 4.0f,
-						sinf(normalized) / 1.0f
-					}, creature->transform.pos);
-
-					glm_vec3((vec3) {
-						fmodf(90.0f + 360.0f - (glm_deg((atan2f(creature->transform.pos[0], creature->transform.pos[2]))) + 180.0f), 360.0f), 0, 0
-					}, creature->transform.euler);
-				}
-
 				update_creature(creature);
+				script_update_creature(world->L, creature, delta_time);
 			}
 		}
 	}

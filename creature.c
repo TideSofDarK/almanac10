@@ -1,21 +1,46 @@
 #include "creature.h"
 
+#include <assimp/types.h>
+
 #include "vector.h"
+#include "script.h"
 
 static CreatureData* precached_creatures = NULL;
 
-void precache_creature(CreatureData creature_data)
+int precache_creature(const char * script_name)
 {
 	/* TODO: actually precache stuff */
-	vector_push_back(precached_creatures, creature_data);
+	vector_push_back(precached_creatures, parse_lua_creature(script_name));
+
+	return (int)vector_size(precached_creatures) - 1;
+}
+
+CreatureData get_precached_creature_data(const char* name)
+{
+	char * script_name = malloc(MAXLEN);
+	script_name[0] = '\0';
+	strcat(script_name, "c_");
+	strcat(script_name, name);
+
+	for (size_t i = 0; i < vector_size(precached_creatures); i++)
+	{
+		if (strcmp(script_name, precached_creatures[i].script_name) == 0)
+		{
+			return precached_creatures[i];
+		}
+	}
+
+	int index = precache_creature(script_name);
+	return precached_creatures[index];
 }
 
 void free_precached_creatures()
 {
 	for (size_t i = 0; i < vector_size(precached_creatures); i++)
 	{
-		//free(precached_creatures[i].name);
-		//free(precached_creatures[i].sprite_sheet_folder);
+        free(precached_creatures[i].script_name);
+		free(precached_creatures[i].name);
+		free(precached_creatures[i].sprite_sheet_folder);
 	}
 
 	vector_free(precached_creatures);
