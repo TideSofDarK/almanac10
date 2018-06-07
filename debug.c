@@ -105,7 +105,7 @@ void debug_world(struct nk_context *ctx)
 					nk_layout_row_push(ctx, 0.7f);
 					nk_label(ctx, creature->name, NK_TEXT_ALIGN_LEFT);
 					nk_layout_row_push(ctx, 0.2f);
-					if (nk_button_label(ctx, "kill"))
+					if (nk_button_label(ctx, "remove"))
 					{
 						vector_push_back(world->creatures_to_remove, i);
 					}
