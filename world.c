@@ -14,28 +14,28 @@
 
 /* Macros to clean up creatures, projectiles and so on */
 /* TODO: possible refactoring of this */
-#define remove_entities(world, to_remove, things, func, all)			\
-do {																	\
-	if (all == 1)														\
-	{																	\
-		vector_free(world->to_remove);									\
-		if (world->things != NULL && !vector_empty(world->things))		\
-		{																\
-			for (size_t i = 0; i < vector_size(world->things); ++i) {	\
-				vector_push_back(world->to_remove, i);					\
-			}															\
-		}																\
-	}																	\
-	if (world->to_remove != NULL && !vector_empty(world->to_remove))	\
-	{																	\
-		for (size_t i = 0; i < vector_size(world->to_remove); ++i) {	\
-			int index_to_remove = world->to_remove[i];					\
-			func(&world->things[index_to_remove], world);				\
-			vector_erase(world->things, index_to_remove);				\
-		}																\
-		vector_free(world->to_remove);									\
-		world->to_remove = NULL;										\
-	}																	\
+#define remove_entities(world, to_remove, things, func, all)        \
+do {                                                                \
+    if (all == 1)                                                   \
+    {                                                               \
+        for (size_t i = 0; i < vector_size(world->things); ++i)     \
+        {                                                           \
+            func(&world->things[i], world);                         \
+        }                                                           \
+        vector_free(world->things);                                 \
+        world->things = NULL;                                       \
+    }                                                               \
+    else                                                            \
+    {                                                               \
+        for (size_t i = 0; i < vector_size(world->to_remove); ++i)  \
+        {                                                           \
+            int index_to_remove = world->to_remove[i];              \
+            func(&world->things[index_to_remove], world);           \
+            vector_erase(world->things, index_to_remove);           \
+        }                                                           \
+    }                                                               \
+    vector_free(world->to_remove);                                  \
+    world->to_remove = NULL;                                        \
 } while(0);
 
 static inline void destruct_world_projectile(Projectile** _projectile, World * world)
@@ -82,6 +82,8 @@ void destruct_world(World ** _world)
 	remove_entities(world, projectiles_to_remove, projectiles, destruct_world_projectile, 1);
 	remove_entities(world, creatures_to_remove, creatures, destruct_world_creature, 1);
 	remove_entities(world, objects3d_to_remove, objects3d, destruct_world_object3d, 1);
+
+    lua_close(world->L);
 
 	free(world->name);
 	world->name = NULL;

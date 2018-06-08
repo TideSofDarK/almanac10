@@ -218,90 +218,147 @@ static int script_config_get_fov(lua_State *L)
 	return 1;
 }
 
-void push_config_functions(lua_State *L)
-{
-	lua_register(L, "config_get_fov", script_config_get_fov);
-	lua_register(L, "config_get_window_size", script_config_get_window_size);
-}
-
 /*
  *
  * Creature API
  *
  */
 
-static inline void push_creature_enums(lua_State *L)
+static inline void push_creature(lua_State * L, int creature_index)
 {
-	lua_pushinteger(L, MOVCAP_NONE); lua_setglobal(L, "MOVCAP_NONE");
-	lua_pushinteger(L, MOVCAP_GROUND); lua_setglobal(L, "MOVCAP_GROUND");
-	lua_pushinteger(L, MOVCAP_FLY); lua_setglobal(L, "MOVCAP_FLY");
-
-	lua_pushinteger(L, AISTATE_NONE); lua_setglobal(L, "AISTATE_NONE");
-	lua_pushinteger(L, AISTATE_IDLE); lua_setglobal(L, "AISTATE_IDLE");
-	lua_pushinteger(L, AISTATE_ROAM); lua_setglobal(L, "AISTATE_ROAM");
-	lua_pushinteger(L, AISTATE_FLEE); lua_setglobal(L, "AISTATE_FLEE");
-	lua_pushinteger(L, AISTATE_ATTACKING); lua_setglobal(L, "AISTATE_ATTACKING");
-	lua_pushinteger(L, AISTATE_CHASING); lua_setglobal(L, "AISTATE_CHASING");
+    lua_rawgeti(L, LUA_REGISTRYINDEX, creature_index);
 }
 
 CreatureData parse_lua_creature(const char * script_name)
 {
-	CreatureData creature_data;
+    CreatureData creature_data;
 
-	creature_data.script_name = strdup(script_name);
+    creature_data.script_name = strdup(script_name);
 
-	char * creature_data_table = malloc(MAXLEN);
-	creature_data_table[0] = '\0';
-	strcat(creature_data_table, creature_data.script_name);
-	strcat(creature_data_table, "_data");
+    char * creature_data_table = malloc(MAXLEN);
+    creature_data_table[0] = '\0';
+    strcat(creature_data_table, creature_data.script_name);
+    strcat(creature_data_table, "_data");
 
-	int status;
-	lua_State *L = luaL_newstate();
-	if (!L)
-		return creature_data;
+    int status;
+    lua_State *L = luaL_newstate();
+    if (!L)
+        return creature_data;
     luaA_open(L);
-	luaL_openlibs(L);
+    luaL_openlibs(L);
 
-	require_api(L);
+    require_api(L);
 
-	require(L, creature_data.script_name);
+    require(L, creature_data.script_name);
 
-	lua_getglobal(L, creature_data_table);
+    lua_getglobal(L, creature_data_table);
 
-	creature_data.name                  = (char*)get_field_string(L, "name");
-	creature_data.health                = get_field_int(L, "max_health");
-	creature_data.mana                  = get_field_int(L, "max_mana");
+    creature_data.name                  = (char*)get_field_string(L, "name");
+    creature_data.health                = get_field_int(L, "max_health");
+    creature_data.mana                  = get_field_int(L, "max_mana");
 
-	creature_data.attack_dice_count		= get_field_int(L, "attack_dice_count");
-	creature_data.attack_dice			= get_field_int(L, "attack_dice");
-	creature_data.attack_bonus			= get_field_int(L, "attack_bonus");
+    creature_data.attack_dice_count		= get_field_int(L, "attack_dice_count");
+    creature_data.attack_dice			= get_field_int(L, "attack_dice");
+    creature_data.attack_bonus			= get_field_int(L, "attack_bonus");
 
-	creature_data.movement_capability	= (MovementCapability)get_field_int(L, "movement_capability");
+    creature_data.movement_capability	= (MovementCapability)get_field_int(L, "movement_capability");
 
-	creature_data.sprite_sheet_folder	= (char*)get_field_string(L, "sprite_sheet_folder");
+    creature_data.sprite_sheet_folder	= (char*)get_field_string(L, "sprite_sheet_folder");
 
-	lua_settop(L, 0);
-	lua_close(L);
+    lua_settop(L, 0);
+    lua_close(L);
 
-	free(creature_data_table);
+    free(creature_data_table);
 
-	return creature_data;
+    return creature_data;
 }
 
-static inline void push_creature(lua_State * L, int creature_index)
+int script_insert_creature(lua_State * L, const char * script_name)
 {
-	lua_rawgeti(L, LUA_REGISTRYINDEX, creature_index);
+    int creature_index = 0;
+    lua_getglobal(L, script_name);
+    lua_print_error(L, lua_pcall(L, 0, 1, 0));
+    creature_index = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    push_creature(L, creature_index);
+
+    lua_pushstring(L, "__creature_index");
+    lua_pushinteger(L, creature_index);
+    lua_settable(L, -3);
+
+    call_method(L, "on_spawn");
+
+    lua_settop(L, 0);
+
+    return creature_index;
 }
 
+void script_destroy_creature(lua_State * L, Creature* creature)
+{
+    push_creature(L, creature->index);
+
+    call_method(L, "on_destroy");
+    luaL_unref(L, LUA_REGISTRYINDEX, creature->index);
+
+    lua_settop(L, 0);
+}
+
+void script_kill_creature(lua_State * L, Creature * creature)
+{
+    push_creature(L, creature->index);
+    call_method(L, "on_death");
+
+    lua_settop(L, 0);
+}
+
+void script_update_creature(lua_State * L, Creature* creature, float delta_time)
+{
+    push_creature(L, creature->index);
+    call_method_1f(L, "update", delta_time);
+
+    lua_settop(L, 0);
+}
+
+/*
+ * Input: creature index
+ * Outputs: creature LUA object
+ */
 static int api_get_creature(lua_State * L)
 {
-	int creature_index = (int)luaL_checknumber(L, 1);
+    int creature_index = (int)luaL_checknumber(L, 1);
 
-	push_creature(L, creature_index);
+    push_creature(L, creature_index);
 
-	return 1;
+    return 1;
 }
 
+/*
+ * Input: creature name without c_ prefix and vec3 position
+ * Outputs: creature LUA object
+ */
+static int api_spawn_creature(lua_State * L)
+{
+    World* world = NULL;
+    active_world(&world);
+    assert(world != NULL);
+
+    const char * creature_name = luaL_checkstring(L, 1);
+    vec3 pos;
+
+    lua_settop(L, 2);
+    get_vector(L, pos);
+
+    Creature* creature = spawn_creature(world, creature_name, pos);
+
+    push_creature(L, creature->index);
+
+    return 1;
+}
+
+/*
+ * Input: creature index
+ * Outputs: vector LUA object
+ */
 static int api_get_creature_position(lua_State * L)
 {
     int creature_index = (int)luaL_checknumber(L, 1);
@@ -319,6 +376,9 @@ static int api_get_creature_position(lua_State * L)
     return 1;
 }
 
+/*
+ * Input: creature index and vec3 position
+ */
 static int api_set_creature_position(lua_State * L)
 {
     int creature_index = (int)luaL_checknumber(L, 1);
@@ -338,51 +398,6 @@ static int api_set_creature_position(lua_State * L)
     glm_vec_copy(new_pos, creature->transform.pos);
 
     return 0;
-}
-
-int script_insert_creature(lua_State * L, const char * script_name)
-{
-    int creature_index = 0;
-	lua_getglobal(L, "creatures");
-	lua_getglobal(L, script_name);
-	lua_print_error(L, lua_pcall(L, 0, 1, 0));
-	creature_index = luaL_ref(L, LUA_REGISTRYINDEX);
-
-    push_creature(L, creature_index);
-
-	lua_pushstring(L, "__creature_index");
-	lua_pushinteger(L, creature_index);
-	lua_settable(L, -3);
-
-    call_method(L, "on_spawn");
-
-	lua_settop(L, 0);
-	return creature_index;
-}
-
-void script_destroy_creature(lua_State * L, Creature* creature)
-{
-    push_creature(L, creature->index);
-    call_method(L, "on_destroy");
-	luaL_unref(L, LUA_REGISTRYINDEX, creature->index);
-
-	lua_settop(L, 0);
-}
-
-void script_kill_creature(lua_State * L, Creature * creature)
-{
-	push_creature(L, creature->index);
-    call_method(L, "on_death");
-
-	lua_settop(L, 0);
-}
-
-void script_update_creature(lua_State * L, Creature* creature, float delta_time)
-{
-    push_creature(L, creature->index);
-    call_method_1f(L, "update", delta_time);
-
-    lua_settop(L, 0);
 }
 
 /*
@@ -417,11 +432,26 @@ static inline void require_api(lua_State *L)
 	append_path(L);
 	require(L, "u_tools");
     require(L, "u_vector");
-	//require(L, "u_class");
-	push_config_functions(L);
-	push_creature_enums(L);
+	require(L, "u_class");
+
+	/* API: Config */
+    lua_register(L, "config_get_fov", script_config_get_fov);
+    lua_register(L, "config_get_window_size", script_config_get_window_size);
+
+    /* API: Creature */
+    lua_pushinteger(L, MOVCAP_NONE); lua_setglobal(L, "MOVCAP_NONE");
+    lua_pushinteger(L, MOVCAP_GROUND); lua_setglobal(L, "MOVCAP_GROUND");
+    lua_pushinteger(L, MOVCAP_FLY); lua_setglobal(L, "MOVCAP_FLY");
+
+    lua_pushinteger(L, AISTATE_NONE); lua_setglobal(L, "AISTATE_NONE");
+    lua_pushinteger(L, AISTATE_IDLE); lua_setglobal(L, "AISTATE_IDLE");
+    lua_pushinteger(L, AISTATE_ROAM); lua_setglobal(L, "AISTATE_ROAM");
+    lua_pushinteger(L, AISTATE_FLEE); lua_setglobal(L, "AISTATE_FLEE");
+    lua_pushinteger(L, AISTATE_ATTACKING); lua_setglobal(L, "AISTATE_ATTACKING");
+    lua_pushinteger(L, AISTATE_CHASING); lua_setglobal(L, "AISTATE_CHASING");
 
 	lua_register(L, "get_creature", api_get_creature);
+    lua_register(L, "spawn_creature", api_spawn_creature);
 	lua_register(L, "get_creature_position", api_get_creature_position);
     lua_register(L, "set_creature_position", api_set_creature_position);
 }
