@@ -65,7 +65,7 @@ typedef struct Creature
 	clock_t roam_clock;
 
 	int dead;
-	unsigned int index;
+	int index;
 	// TODO: Abilities, loot, etc...
 } Creature;
 

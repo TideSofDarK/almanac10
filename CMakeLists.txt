@@ -66,7 +66,9 @@ add_executable(almanac10
         vertices.h
         world.c
         world.h
-        almanac10.rc object.c object.h)
+        object.c
+        object.h
+        almanac10.rc)
 
 target_link_libraries(almanac10
         assimp

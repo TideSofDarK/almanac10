@@ -103,22 +103,19 @@ void insert_projectile(World* world, Projectile* projectile)
 /* TODO: maybe we should move this code somewhere else and leave only insert_creature thingy */
 Creature* spawn_creature(World* world, const char * name, vec3 pos)
 {
-	static unsigned int creature_index;
-	creature_index++;
-
 	CreatureData creature_data = get_precached_creature_data(name);
 
 	Creature* creature = NULL;
 	construct_creature(&creature, creature_data, pos);
-	creature->index = creature_index;
-	vector_push_back(world->creatures, creature);
+    int creature_index = script_insert_creature(world->L, creature_data.script_name);
+    creature->index = creature_index;
 
-	script_insert_creature(world->L, creature_data.script_name, creature_index);
+    vector_push_back(world->creatures, creature);
 
 	return creature;
 }
 
-void creature_by_index(Creature** _creature, World* world, unsigned int index)
+void creature_by_index(Creature** _creature, World* world, int index)
 {
 	if (world->creatures != NULL && !vector_empty(world->creatures))
 	{
@@ -149,7 +146,8 @@ void update_world(World* world, float delta_time)
 	/* Update projectiles */
 	if (world->projectiles != NULL && !vector_empty(world->projectiles))
 	{
-		for (size_t i = 0; i < vector_size(world->projectiles); ++i) {
+		for (size_t i = 0; i < vector_size(world->projectiles); ++i)
+		{
 			Projectile* projectile = world->projectiles[i];
 			if (projectile != NULL)
 			{
@@ -189,7 +187,8 @@ void update_world(World* world, float delta_time)
 	/* Update creatures */
 	if (world->creatures != NULL && !vector_empty(world->creatures))
 	{
-		for (size_t i = 0; i < vector_size(world->creatures); ++i) {
+		for (size_t i = 0; i < vector_size(world->creatures); ++i)
+		{
 			Creature* creature = world->creatures[i];
 			if (creature != NULL)
 			{

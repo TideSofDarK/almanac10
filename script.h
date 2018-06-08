@@ -9,7 +9,7 @@
 
 CreatureData parse_lua_creature(const char *);
 
-void script_insert_creature(lua_State *, const char *, unsigned int);
+int  script_insert_creature(lua_State *, const char *);
 void script_destroy_creature(lua_State *, Creature*);
 void script_kill_creature(lua_State *, Creature *);
 void script_update_creature(lua_State *, Creature*, float);

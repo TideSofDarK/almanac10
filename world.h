@@ -36,6 +36,6 @@ void destruct_world(World**);
 void insert_object3d(World*, Object3D*);
 void insert_projectile(World*, Projectile*);
 Creature* spawn_creature(World*, const char *, vec3);
-void creature_by_index(Creature**, World*, unsigned int);
+void creature_by_index(Creature**, World*, int);
 
 void update_world(World*, float);

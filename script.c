@@ -155,6 +155,21 @@ static inline int get_field_int(lua_State *L, const char *key)
 	return result;
 }
 
+static inline void call_method(lua_State * L, const char * method)
+{
+    lua_getfield(L, -1, method);
+    lua_pushvalue(L, -2);
+    lua_print_error(L, lua_pcall(L, 1, 0, 0));
+}
+
+static inline void call_method_1f(lua_State * L, const char * method, float arg1)
+{
+    lua_getfield(L, -1, method);
+    lua_pushvalue(L, -2);
+    lua_pushnumber(L, arg1);
+    lua_print_error(L, lua_pcall(L, 2, 0, 0));
+}
+
 static inline void push_vector(lua_State * L, vec3 v)
 {
 	lua_getglobal(L, "Vector");
@@ -164,6 +179,22 @@ static inline void push_vector(lua_State * L, vec3 v)
 	lua_pushnumber(L, v[2]);
 
 	lua_print_error(L, lua_pcall(L, 3, 1, 0));
+}
+
+static inline void get_vector(lua_State * L, vec3 v) /* assumes the Vector table is on top */
+{
+    float x, y, z;
+
+    lua_getfield(L, -1, "x");
+    x = (float)luaL_checknumber(L, -1);
+
+    lua_getfield(L, -2, "y");
+    y = (float)luaL_checknumber(L, -1);
+
+    lua_getfield(L, -3, "z");
+    z = (float)luaL_checknumber(L, -1);
+
+    glm_vec_copy((vec3) { x, y, z }, v);
 }
 
 /*
@@ -257,16 +288,14 @@ CreatureData parse_lua_creature(const char * script_name)
 	return creature_data;
 }
 
-static inline void push_creature(lua_State * L, unsigned int creature_index)
+static inline void push_creature(lua_State * L, int creature_index)
 {
-    lua_getglobal(L, "creatures");
-    lua_pushinteger(L, creature_index);
-	lua_gettable (L, -2);
+	lua_rawgeti(L, LUA_REGISTRYINDEX, creature_index);
 }
 
 static int api_get_creature(lua_State * L)
 {
-	unsigned int creature_index = (unsigned int)luaL_checknumber(L, 1);
+	int creature_index = (int)luaL_checknumber(L, 1);
 
 	push_creature(L, creature_index);
 
@@ -275,47 +304,67 @@ static int api_get_creature(lua_State * L)
 
 static int api_get_creature_position(lua_State * L)
 {
-	unsigned int creature_index = (unsigned int)luaL_checknumber(L, 1);
+    int creature_index = (int)luaL_checknumber(L, 1);
 
-	World* world = NULL;
-	active_world(&world);
-	assert(world != NULL);
+    World* world = NULL;
+    active_world(&world);
+    assert(world != NULL);
 
-	Creature* creature = NULL;
-	creature_by_index(&creature, world, creature_index);
-	assert(creature != NULL);
+    Creature* creature = NULL;
+    creature_by_index(&creature, world, creature_index);
+    assert(creature != NULL);
 
     push_vector(L, creature->transform.pos);
 
-	return 1;
+    return 1;
 }
 
-void script_insert_creature(lua_State * L, const char * script_name, unsigned int creature_index)
+static int api_set_creature_position(lua_State * L)
 {
+    int creature_index = (int)luaL_checknumber(L, 1);
+
+    World* world = NULL;
+    active_world(&world);
+    assert(world != NULL);
+
+    Creature* creature = NULL;
+    creature_by_index(&creature, world, creature_index);
+    assert(creature != NULL);
+
+    lua_settop(L, 2);
+
+    vec3 new_pos;
+    get_vector(L, new_pos);
+    glm_vec_copy(new_pos, creature->transform.pos);
+
+    return 0;
+}
+
+int script_insert_creature(lua_State * L, const char * script_name)
+{
+    int creature_index = 0;
 	lua_getglobal(L, "creatures");
 	lua_getglobal(L, script_name);
 	lua_print_error(L, lua_pcall(L, 0, 1, 0));
+	creature_index = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    push_creature(L, creature_index);
+
 	lua_pushstring(L, "__creature_index");
 	lua_pushinteger(L, creature_index);
 	lua_settable(L, -3);
-	lua_pushinteger(L, creature_index);
-	lua_pushvalue(L, -2);
-	lua_settable(L, -4);
+
+    call_method(L, "on_spawn");
+
 	lua_settop(L, 0);
+	return creature_index;
 }
 
 void script_destroy_creature(lua_State * L, Creature* creature)
 {
     push_creature(L, creature->index);
-
-    lua_getfield(L, -1, "on_destroy");
-    lua_pushvalue(L, -2);
-	lua_print_error(L, lua_pcall(L, 1, 0, 0));
-
-	lua_getglobal(L, "creatures");
-	lua_pushinteger(L, creature->index);
-	lua_pushnil(L);
-	lua_settable(L, -3);
+    call_method(L, "on_destroy");
+	luaL_unref(L, LUA_REGISTRYINDEX, creature->index);
 
 	lua_settop(L, 0);
 }
@@ -323,10 +372,7 @@ void script_destroy_creature(lua_State * L, Creature* creature)
 void script_kill_creature(lua_State * L, Creature * creature)
 {
 	push_creature(L, creature->index);
-
-	lua_getfield(L, -1, "on_death");
-	lua_pushvalue(L, -2);
-	lua_print_error(L, lua_pcall(L, 1, 0, 0));
+    call_method(L, "on_death");
 
 	lua_settop(L, 0);
 }
@@ -334,11 +380,8 @@ void script_kill_creature(lua_State * L, Creature * creature)
 void script_update_creature(lua_State * L, Creature* creature, float delta_time)
 {
     push_creature(L, creature->index);
+    call_method_1f(L, "update", delta_time);
 
-	lua_getfield(L, -1, "update");
-    lua_pushvalue(L, -2);
-    lua_pushnumber(L, delta_time);
-	lua_print_error(L, lua_pcall(L, 2, 0, 0));
     lua_settop(L, 0);
 }
 
@@ -380,4 +423,5 @@ static inline void require_api(lua_State *L)
 
 	lua_register(L, "get_creature", api_get_creature);
 	lua_register(L, "get_creature_position", api_get_creature_position);
+    lua_register(L, "set_creature_position", api_set_creature_position);
 }
