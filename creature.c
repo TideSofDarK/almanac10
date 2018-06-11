@@ -15,7 +15,7 @@ int precache_creature(const char * script_name)
 	return (int)vector_size(precached_creatures) - 1;
 }
 
-CreatureData get_precached_creature_data(const char* name)
+CreatureData const * get_precached_creature_data(const char* name)
 {
 	char * script_name = malloc(MAXLEN);
 	script_name[0] = '\0';
@@ -26,12 +26,12 @@ CreatureData get_precached_creature_data(const char* name)
 	{
 		if (strcmp(script_name, precached_creatures[i].script_name) == 0)
 		{
-			return precached_creatures[i];
+			return &precached_creatures[i];
 		}
 	}
 
 	int index = precache_creature(script_name);
-	return precached_creatures[index];
+	return &precached_creatures[index];
 }
 
 void free_precached_creatures()
@@ -46,7 +46,7 @@ void free_precached_creatures()
 	vector_free(precached_creatures);
 }
 
-void construct_creature(Creature** _creature, CreatureData creature_data, vec3 pos)
+void construct_creature(Creature** _creature, CreatureData const * creature_data, vec3 pos)
 {
 	*_creature = malloc(sizeof(Creature));
 	Creature* creature = *_creature;
@@ -55,10 +55,8 @@ void construct_creature(Creature** _creature, CreatureData creature_data, vec3 p
 	glm_vec_copy(pos, creature->transform.pos);
 	glm_vec_copy(pos, creature->start_pos);
 
-	creature->name = _strdup(creature_data.name);
-
 	creature->sprite = NULL;
-	sprite_creature(&creature->sprite, creature_data.sprite_sheet_folder);
+	sprite_creature(&creature->sprite, creature_data->sprite_sheet_folder);
 
 	creature->ai_state = AISTATE_ROAM;
 	creature->attack_target = NULL;
@@ -66,14 +64,8 @@ void construct_creature(Creature** _creature, CreatureData creature_data, vec3 p
 	glm_vec_zero(creature->roam_pos);
 	creature->roam_clock = -1;
 
-	creature->health = creature->max_health = creature_data.health;
-	creature->mana = creature->max_mana = creature_data.mana;
-
-	creature->attack_dice_count = creature_data.attack_dice_count;
-	creature->attack_dice = creature_data.attack_dice;
-	creature->attack_bonus = creature_data.attack_bonus;
-
-	creature->movement_capability = creature_data.movement_capability;
+	creature->data = creature_data;
+	reset_creature_stats(creature);
 
 	creature->begin = clock();
 
@@ -86,10 +78,20 @@ void destruct_creature(Creature** _creature)
 	
 	destruct_sprite(&creature->sprite);
 
-	free(creature->name);
-
 	free(*_creature);
 	*_creature = NULL;
+}
+
+void reset_creature_stats(Creature* creature)
+{
+	assert(creature->data != NULL);
+	creature->name = creature->data->name;
+	creature->health = creature->max_health = creature->data->health;
+	creature->mana = creature->max_mana = creature->data->mana;
+	creature->attack_dice_count = creature->data->attack_dice_count;
+	creature->attack_dice = creature->data->attack_dice;
+	creature->attack_bonus = creature->data->attack_bonus;
+	creature->movement_capability = creature->data->movement_capability;
 }
 
 void kill_creature(Creature* creature)

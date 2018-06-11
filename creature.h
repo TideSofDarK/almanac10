@@ -48,33 +48,37 @@ typedef struct Creature
 {
 	Transform transform;
 	vec3 start_pos;
-	
+
+	CreatureData const * data;
+
 	Sprite* sprite;
 	struct Creature* attack_target;
 	
 	AIState ai_state;
 	vec3 roam_start_pos;
 	vec3 roam_pos;
-	int health, max_health;
+    clock_t roam_clock;
 
+	int health, max_health;
 	int mana, max_mana;
 	int attack_dice_count, attack_dice, attack_bonus;
-	char * name;
+
+	const char * name;
 	MovementCapability movement_capability;
-	clock_t begin;
-	clock_t roam_clock;
 
 	int dead;
 	int index;
 	// TODO: Abilities, loot, etc...
+    clock_t begin;
 } Creature;
 
-CreatureData get_precached_creature_data(const char*);
+CreatureData const * get_precached_creature_data(const char*);
 void free_precached_creatures();
 
-void construct_creature(Creature**, CreatureData, vec3);
+void construct_creature(Creature**, CreatureData const *, vec3);
 void destruct_creature(Creature**);
 
+void reset_creature_stats(Creature*);
 void kill_creature(Creature*);
 
 void update_creature(Creature*);

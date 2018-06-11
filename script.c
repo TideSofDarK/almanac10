@@ -33,78 +33,6 @@ static inline void lua_toptype(lua_State *L)
 
 /*
  *
- * LUA table functions imported from ltablib.c
- *
- */
-
-#define TAB_R	1			/* read */
-#define TAB_W	2			/* write */
-#define TAB_L	4			/* length */
-#define TAB_RW	(TAB_R | TAB_W)		/* read/write */
-#define aux_getn(L,n,w)	(checktab(L, n, (w) | TAB_L), luaL_len(L, n))
-
-static inline int checkfield (lua_State *L, const char *key, int n) {
-	lua_pushstring(L, key);
-	return (lua_rawget(L, -n) != LUA_TNIL);
-}
-
-static inline void checktab (lua_State *L, int arg, int what) {
-	if (lua_type(L, arg) != LUA_TTABLE) {  /* is it not a table? */
-		int n = 1;  /* number of elements to pop */
-		if (lua_getmetatable(L, arg) &&  /* must have metatable */
-			(!(what & TAB_R) || checkfield(L, "__index", ++n)) &&
-			(!(what & TAB_W) || checkfield(L, "__newindex", ++n)) &&
-			(!(what & TAB_L) || checkfield(L, "__len", ++n))) {
-			lua_pop(L, n);  /* pop metatable and tested metamethods */
-		}
-		else
-			luaL_checktype(L, arg, LUA_TTABLE);  /* force an error */
-	}
-}
-
-static inline int tinsert (lua_State *L) {
-	lua_Integer e = aux_getn(L, 1, TAB_RW) + 1;  /* first empty element */
-	lua_Integer pos;  /* where to insert new element */
-	switch (lua_gettop(L)) {
-		case 2: {  /* called with only 2 arguments */
-			pos = e;  /* insert new element at the end */
-			break;
-		}
-		case 3: {
-			lua_Integer i;
-			pos = luaL_checkinteger(L, 2);  /* 2nd argument is the position */
-			luaL_argcheck(L, 1 <= pos && pos <= e, 2, "position out of bounds");
-			for (i = e; i > pos; i--) {  /* move up elements */
-				lua_geti(L, 1, i - 1);
-				lua_seti(L, 1, i);  /* t[i] = t[i - 1] */
-			}
-			break;
-		}
-		default: {
-			return luaL_error(L, "wrong number of arguments to 'insert'");
-		}
-	}
-	lua_seti(L, 1, pos);  /* t[pos] = v */
-	return 0;
-}
-
-static inline int tremove (lua_State *L) {
-	lua_Integer size = aux_getn(L, 1, TAB_RW);
-	lua_Integer pos = luaL_optinteger(L, 2, size);
-	if (pos != size)  /* validate 'pos' if given */
-		luaL_argcheck(L, 1 <= pos && pos <= size + 1, 1, "position out of bounds");
-	lua_geti(L, 1, pos);  /* result = t[pos] */
-	for ( ; pos < size; pos++) {
-		lua_geti(L, 1, pos + 1);
-		lua_seti(L, 1, pos);  /* t[pos] = t[pos + 1] */
-	}
-	lua_pushnil(L);
-	lua_seti(L, 1, pos);  /* t[pos] = nil */
-	return 1;
-}
-
-/*
- *
  * Utility functions
  *
  */
@@ -158,6 +86,8 @@ static inline int get_field_int(lua_State *L, const char *key)
 static inline void call_method(lua_State * L, const char * method)
 {
     lua_getfield(L, -1, method);
+    if (!lua_isfunction(L, -1))
+        return;
     lua_pushvalue(L, -2);
     lua_print_error(L, lua_pcall(L, 1, 0, 0));
 }
@@ -165,6 +95,8 @@ static inline void call_method(lua_State * L, const char * method)
 static inline void call_method_1f(lua_State * L, const char * method, float arg1)
 {
     lua_getfield(L, -1, method);
+    if (!lua_isfunction(L, -1))
+        return;
     lua_pushvalue(L, -2);
     lua_pushnumber(L, arg1);
     lua_print_error(L, lua_pcall(L, 2, 0, 0));
@@ -197,6 +129,57 @@ static inline void get_vector(lua_State * L, vec3 v) /* assumes the Vector table
     glm_vec_copy((vec3) { x, y, z }, v);
 }
 
+#define api_integer_getter(n, t, f) static int n(lua_State * L) \
+{\
+    lua_getfield(L, 1, "__self");\
+    void **bp = lua_touserdata(L, -1);\
+    void *p = *bp;\
+    t thing = (t)p;\
+    assert(thing != NULL);\
+    lua_pushinteger(L, thing->f);\
+    return 1;\
+}
+
+#define api_integer_setter(n, t, f) static int n(lua_State * L) \
+{\
+    lua_getfield(L, 1, "__self");\
+    void **bp = lua_touserdata(L, -1);\
+    void *p = *bp;\
+    t thing = (t)p;\
+    assert(thing != NULL);\
+    thing->f = (int)luaL_checkinteger(L, 2);\
+    return 0;\
+}
+
+#define api_vector_getter(n, t, f) static int n(lua_State * L) \
+{\
+    lua_getfield(L, 1, "__self");\
+    void **bp = lua_touserdata(L, -1);\
+    void *p = *bp;\
+    t thing = (t)p;\
+    assert(thing != NULL);\
+    push_vector(L, thing->f);\
+    return 1;\
+}
+
+#define api_vector_setter(n, t, f) static int n(lua_State * L) \
+{\
+    lua_getfield(L, 1, "__self");\
+    void **bp = lua_touserdata(L, -1);\
+    void *p = *bp;\
+    t thing = (t)p;\
+    assert(thing != NULL);\
+    lua_settop(L, 2);\
+    get_vector(L, thing->f);\
+    return 0;\
+}
+
+#define api_integer_getter_setter(n, t, f) api_integer_getter(api_get_##n, t, f) api_integer_setter(api_set_##n, t, f)
+
+#define api_vector_getter_setter(n, t, f) api_vector_getter(api_get_##n, t, f) api_vector_setter(api_set_##n, t, f)
+
+#define api_methods_getter_setter(p, f) {"get_" #f, api_get_##p##f}, {"set_" #f, api_set_##p##f},
+
 /*
  *
  * Config API
@@ -224,11 +207,6 @@ static int script_config_get_fov(lua_State *L)
  *
  */
 
-static inline void push_creature(lua_State * L, int creature_index)
-{
-    lua_rawgeti(L, LUA_REGISTRYINDEX, creature_index);
-}
-
 CreatureData parse_lua_creature(const char * script_name)
 {
     CreatureData creature_data;
@@ -244,7 +222,6 @@ CreatureData parse_lua_creature(const char * script_name)
     lua_State *L = luaL_newstate();
     if (!L)
         return creature_data;
-    luaA_open(L);
     luaL_openlibs(L);
 
     require_api(L);
@@ -273,24 +250,99 @@ CreatureData parse_lua_creature(const char * script_name)
     return creature_data;
 }
 
-int script_insert_creature(lua_State * L, const char * script_name)
+static inline void push_creature(lua_State * L, int creature_index)
 {
-    int creature_index = 0;
-    lua_getglobal(L, script_name);
-    lua_print_error(L, lua_pcall(L, 0, 1, 0));
-    creature_index = luaL_ref(L, LUA_REGISTRYINDEX);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, creature_index);
+}
+
+static int api_get_creature(lua_State * L)
+{
+    int creature_index = (int)luaL_checknumber(L, 1);
 
     push_creature(L, creature_index);
 
-    lua_pushstring(L, "__creature_index");
-    lua_pushinteger(L, creature_index);
-    lua_settable(L, -3);
+    return 1;
+}
 
+static int api_spawn_creature(lua_State * L)
+{
+    World* world = NULL;
+    active_world(&world);
+    assert(world != NULL);
+
+    const char * creature_name = luaL_checkstring(L, 1);
+    vec3 pos;
+
+    lua_settop(L, 2);
+    get_vector(L, pos);
+
+    Creature* creature = spawn_creature(world, creature_name, pos);
+
+    push_creature(L, creature->index);
+
+    return 1;
+}
+
+static int api_kill_creature(lua_State * L)
+{
+    void **bp = lua_touserdata(L, 1);
+    void *p = *bp;
+    Creature* creature = (Creature*)p;
+    assert(creature != NULL);
+
+    kill_creature(creature);
+
+    return 0;
+}
+
+api_integer_getter(api_get_creature_index, Creature*, index)
+api_vector_getter_setter(creature_position, Creature*, transform.pos)
+api_integer_getter_setter(creature_health, Creature*, health)
+api_integer_getter_setter(creature_max_health, Creature*, max_health)
+api_integer_getter_setter(creature_mana, Creature*, mana)
+api_integer_getter_setter(creature_max_mana, Creature*, max_mana)
+api_integer_getter_setter(creature_attack_dice, Creature*, attack_dice)
+api_integer_getter_setter(creature_attack_dice_count, Creature*, attack_dice_count)
+api_integer_getter_setter(creature_attack_bonus, Creature*, attack_bonus)
+api_integer_getter_setter(creature_movement_capability, Creature*, movement_capability)
+
+static const luaL_Reg api_creature_methods[] = {
+        {"kill", api_kill_creature},
+        {"get_index", api_get_creature_index},
+        api_methods_getter_setter(creature_, position)
+        api_methods_getter_setter(creature_, health)
+        api_methods_getter_setter(creature_, max_health)
+        api_methods_getter_setter(creature_, mana)
+        api_methods_getter_setter(creature_, max_mana)
+        api_methods_getter_setter(creature_, attack_dice)
+        api_methods_getter_setter(creature_, attack_dice_count)
+        api_methods_getter_setter(creature_, attack_bonus)
+        api_methods_getter_setter(creature_, movement_capability)
+        {0, 0}
+};
+
+int script_spawn_creature(lua_State *L, void *_creature)
+{
+    void **bp = lua_newuserdata(L, sizeof(_creature));
+    *bp = _creature;
+    Creature * creature = (Creature*)*bp;
+
+    lua_getglobal(L, creature->data->script_name);
+    lua_getfield(L, -1, "new");
+    lua_pushvalue(L, -2);
+    lua_call (L, 1, 1);
+
+    lua_pushliteral(L, "__self");
+    lua_pushvalue(L, -4);
+    lua_rawset(L, -3);
+
+    creature->index = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    push_creature(L, creature->index);
     call_method(L, "on_spawn");
 
     lua_settop(L, 0);
-
-    return creature_index;
+    return creature->index;
 }
 
 void script_destroy_creature(lua_State * L, Creature* creature)
@@ -319,85 +371,15 @@ void script_update_creature(lua_State * L, Creature* creature, float delta_time)
     lua_settop(L, 0);
 }
 
-/*
- * Input: creature index
- * Outputs: creature LUA object
- */
-static int api_get_creature(lua_State * L)
+static void register_creatures(lua_State * L)
 {
-    int creature_index = (int)luaL_checknumber(L, 1);
+    require(L, "c_base");
 
-    push_creature(L, creature_index);
+    lua_getglobal(L, "c_base");
+    luaL_newlib(L, api_creature_methods);
+    lua_setfield(L, -2, "_");
 
-    return 1;
-}
-
-/*
- * Input: creature name without c_ prefix and vec3 position
- * Outputs: creature LUA object
- */
-static int api_spawn_creature(lua_State * L)
-{
-    World* world = NULL;
-    active_world(&world);
-    assert(world != NULL);
-
-    const char * creature_name = luaL_checkstring(L, 1);
-    vec3 pos;
-
-    lua_settop(L, 2);
-    get_vector(L, pos);
-
-    Creature* creature = spawn_creature(world, creature_name, pos);
-
-    push_creature(L, creature->index);
-
-    return 1;
-}
-
-/*
- * Input: creature index
- * Outputs: vector LUA object
- */
-static int api_get_creature_position(lua_State * L)
-{
-    int creature_index = (int)luaL_checknumber(L, 1);
-
-    World* world = NULL;
-    active_world(&world);
-    assert(world != NULL);
-
-    Creature* creature = NULL;
-    creature_by_index(&creature, world, creature_index);
-    assert(creature != NULL);
-
-    push_vector(L, creature->transform.pos);
-
-    return 1;
-}
-
-/*
- * Input: creature index and vec3 position
- */
-static int api_set_creature_position(lua_State * L)
-{
-    int creature_index = (int)luaL_checknumber(L, 1);
-
-    World* world = NULL;
-    active_world(&world);
-    assert(world != NULL);
-
-    Creature* creature = NULL;
-    creature_by_index(&creature, world, creature_index);
-    assert(creature != NULL);
-
-    lua_settop(L, 2);
-
-    vec3 new_pos;
-    get_vector(L, new_pos);
-    glm_vec_copy(new_pos, creature->transform.pos);
-
-    return 0;
+    lua_settop(L, 0);
 }
 
 /*
@@ -412,17 +394,9 @@ void construct_world_lua_state (lua_State ** _L)
 	lua_State *L = *_L = luaL_newstate();
 	if (!L)
 		return;
-	luaA_open(L);
 	luaL_openlibs(L);
 
 	require_api(L);
-
-	/* TODO: require all creatures */
-	require(L, "c_minotaur");
-    require(L, "c_black_dragon");
-
-	lua_newtable (L);
-	lua_setglobal(L, "creatures");
 
 	lua_settop(L, 0);
 }
@@ -431,10 +405,10 @@ static inline void require_api(lua_State *L)
 {
 	append_path(L);
 	require(L, "u_tools");
+    require(L, "u_class");
     require(L, "u_vector");
-	require(L, "u_class");
 
-	/* API: Config */
+    /* API: Config */
     lua_register(L, "config_get_fov", script_config_get_fov);
     lua_register(L, "config_get_window_size", script_config_get_window_size);
 
@@ -452,6 +426,13 @@ static inline void require_api(lua_State *L)
 
 	lua_register(L, "get_creature", api_get_creature);
     lua_register(L, "spawn_creature", api_spawn_creature);
-	lua_register(L, "get_creature_position", api_get_creature_position);
-    lua_register(L, "set_creature_position", api_set_creature_position);
+    lua_register(L, "kill_creature", api_kill_creature);
+
+    /* TODO: require all creatures */
+
+    register_creatures(L);
+
+    require(L, "c_minotaur");
+    require(L, "c_minotaur_warrior");
+    require(L, "c_black_dragon");
 }

@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
 	translate_pos_vec3((Transform*)spider, (vec3) { 0.0f, 0.5f, 0.0f });
 
 	spawn_creature(world1, "minotaur", (vec3) { 1.0f, 0.0f, 0.0f });
+    spawn_creature(world1, "minotaur_warrior", (vec3) { -1.0f, 0.0f, 0.0f });
     spawn_creature(world1, "black_dragon", (vec3) { 0.0f, 0.0f, 0.0f });
 
 	/* Delta time calculations */

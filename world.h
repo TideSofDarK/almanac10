@@ -2,7 +2,9 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <lautoc.h>
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
 
 #include "vector.h"
 #include "camera.h"
@@ -36,6 +38,5 @@ void destruct_world(World**);
 void insert_object3d(World*, Object3D*);
 void insert_projectile(World*, Projectile*);
 Creature* spawn_creature(World*, const char *, vec3);
-void creature_by_index(Creature**, World*, int);
 
 void update_world(World*, float);

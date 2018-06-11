@@ -12,11 +12,6 @@ include_directories(
         C:/workspace/libs/cglm/include
         C:/workspace/libs/nuklear
         C:/workspace/libs/glad/include
-        C:/workspace/libs/LuaAutoC/include
-)
-
-link_directories(
-        C:/workspace/libs/LuaAutoC/lib
 )
 
 add_executable(almanac10
@@ -73,6 +68,5 @@ add_executable(almanac10
 target_link_libraries(almanac10
         assimp
         glfw
-        lautoc
         lua
         )
