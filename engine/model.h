@@ -19,7 +19,10 @@ typedef enum aiTextureType aiTextureType;
 typedef struct
 {
 	Mesh** meshes;
+	const char * name;
 } Model;
 
-void construct_model(const char*, Model**);
+void construct_model(Model**, const char*, const char *);
 void destruct_model(Model**);
+
+void construct_prop(Model **, const char*);

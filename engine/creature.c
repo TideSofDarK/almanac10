@@ -4,6 +4,7 @@
 
 #include "vector.h"
 #include "script.h"
+#include "util.h"
 
 static CreatureData* precached_creatures = NULL;
 
@@ -17,10 +18,8 @@ int precache_creature(const char * script_name)
 
 CreatureData const * get_precached_creature_data(const char* name)
 {
-	char * script_name = malloc(MAXLEN);
-	script_name[0] = '\0';
-	strcat(script_name, "c_");
-	strcat(script_name, name);
+	char * script_name = NULL;
+	asprintf(&script_name, "c_%s", name);
 
 	for (size_t i = 0; i < vector_size(precached_creatures); i++)
 	{

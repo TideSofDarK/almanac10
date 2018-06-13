@@ -16,7 +16,7 @@ void load_texture(const char* filename, Texture** _texture)
 	*_texture = malloc(sizeof(Texture));
 	Texture * texture = *_texture;
 
-	texture->filename = _strdup(filename);
+	texture->filename = strdup(filename);
 
 	stbi_set_flip_vertically_on_load(1);
 	unsigned char *data = stbi_load(filename, &texture->w, &texture->h, &texture->channels, 0);

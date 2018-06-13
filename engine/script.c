@@ -213,10 +213,8 @@ CreatureData parse_lua_creature(const char * script_name)
 
     creature_data.script_name = strdup(script_name);
 
-    char * creature_data_table = malloc(MAXLEN);
-    creature_data_table[0] = '\0';
-    strcat(creature_data_table, creature_data.script_name);
-    strcat(creature_data_table, "_data");
+    char * creature_data_table = NULL;
+    asprintf(&creature_data_table, "%s_data", creature_data.script_name);
 
     int status;
     lua_State *L = luaL_newstate();

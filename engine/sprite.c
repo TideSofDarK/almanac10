@@ -22,12 +22,12 @@ static const int DIR_INDICES[] = {
 
 static inline void particle_path(char ** dest, const char * particle)
 {
-	snprintf(*dest, MAXLEN, "assets/particles/%s.png", particle);
+    asprintf(dest, "assets/particles/%s.png", particle);
 }
 
 static inline void creature_sheet_path(char ** dest, const char * folder, const char * state, int dir)
 {
-	snprintf(*dest, MAXLEN, "assets/creatures/%s/%s%s%s%s%i.png", folder, folder, "_", state, "_", dir);
+    asprintf(dest, "assets/creatures/%s/%s%s%s%s%i.png", folder, folder, "_", state, "_", dir);
 }
 
 /* Internal; use sprite_creature, sprite_particle, etc */
@@ -65,7 +65,7 @@ void sprite_creature(Sprite** _sprite, const char* folder)
 
 	sprite->anim_state = ANIM_MOVE;
 
-	char * path = malloc(MAXLEN);
+	char * path = NULL;
 
 	for (unsigned int i = 0; i < 5; i++)
 	{
@@ -90,7 +90,7 @@ void sprite_particle(Sprite** _sprite, const char* particle, int w, int h)
 
 	Texture* texture = NULL;
 
-	char * path = malloc(MAXLEN);
+	char * path = NULL;
 	particle_path(&path, particle);
 	cached_texture(path, &sprite->textures[ANIM_SLOT(ANIM_DEATH, 0)]);
 	free(path);

@@ -91,7 +91,6 @@ int main(int argc, char *argv[])
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 	glfwSwapInterval(1);
 	set_window_icon(window);
 
@@ -118,13 +117,8 @@ int main(int argc, char *argv[])
 	init_renderers();
 	init_input();
 
-/*    for (int i = 0; i < 10; i++)
-    {
-        spawn_creature(world1, minotaur_data, (vec3) {(6.0f / 25.0f * (float)i) - 3.0f, 0.0f, 0.0f });
-    }*/
-
 	Model* model = NULL;
-	construct_model("props/spider/spider", &model);
+	construct_prop(&model, "spider");
 
 	Object3D * spider = NULL;
 	construct_object3d(&spider, model);

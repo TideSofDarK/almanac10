@@ -1,13 +1,14 @@
 #include "model.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+
 #include "util.h"
 
-static inline void obj_path(char ** dest, const char * path)
-{
-	snprintf(*dest, MAXLEN, "assets/models/%s.obj", path);
-}
+#define PROPS_PATH ".\\assets\\models\\props\\%s\\"
 
-void process_mesh(const aiScene* ai_scene, aiMesh* ai_mesh, Model* model, Mesh** _mesh)
+void process_mesh(const char * folder, const aiScene* ai_scene, aiMesh* ai_mesh, Mesh** _mesh)
 {
 	/* Vertices, normals, texcoords, indices */
 	Vertex* vertices = NULL;
@@ -47,7 +48,6 @@ void process_mesh(const aiScene* ai_scene, aiMesh* ai_mesh, Model* model, Mesh**
 		}
 	}
 
-	/* Textures; check if already loaded */
 	aiString str;
 	if (ai_mesh->mMaterialIndex >= 0)
 	{
@@ -55,42 +55,48 @@ void process_mesh(const aiScene* ai_scene, aiMesh* ai_mesh, Model* model, Mesh**
 		aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &str, NULL, NULL, NULL, NULL, NULL, NULL);
 	}
 
+	char * texture_path = NULL;
+	asprintf(&texture_path, "%s%s", folder, str.data);
+
 	Texture* texture = NULL;
-	cached_texture(str.data, &texture);
+	cached_texture(texture_path, &texture);
 	construct_mesh(vertices, indices, texture, _mesh);
+
+	free(texture_path);
 }
 
-void process_node(Model* model, aiNode *node, const aiScene *scene)
+void process_node(const char * folder, Model* model, aiNode *node, const aiScene *scene)
 {
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
 		Mesh* mesh = NULL;
-		process_mesh(scene, scene->mMeshes[node->mMeshes[i]], model, &mesh);
+		process_mesh(folder, scene, scene->mMeshes[node->mMeshes[i]], &mesh);
 		vector_push_back(model->meshes, mesh);
 	}
 
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
-		process_node(model, node->mChildren[i], scene);
+		process_node(folder, model, node->mChildren[i], scene);
 	}
 }
 
-void construct_model(const char* folder, Model** _model)
+void construct_model(Model** _model, const char * folder, const char * name)
 {
 	*_model = malloc(sizeof(Model));
 	Model *model = *_model;
 
+	model->name = name;
 	model->meshes = NULL;
 
-	char * filename = malloc(MAXLEN);
-	obj_path(&filename, folder);
+	char * obj_path = NULL;
+	asprintf(&obj_path, "%s%s.obj", folder, name);
 
-	const aiScene* ai_scene = aiImportFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs);
-	process_node(*_model, ai_scene->mRootNode, ai_scene);
+	const aiScene* ai_scene = aiImportFile(obj_path, aiProcess_Triangulate | aiProcess_FlipUVs);
+	process_node(folder, model, ai_scene->mRootNode, ai_scene);
 
 	aiReleaseImport(ai_scene);
 
-	free(filename);
+	free(obj_path);
 }
 
 void destruct_model(Model** _model)
@@ -104,4 +110,12 @@ void destruct_model(Model** _model)
 
 	free(*_model);
 	*_model = NULL;
+}
+
+void construct_prop(Model ** _model, const char * name)
+{
+    char * path = NULL;
+    asprintf(&path, PROPS_PATH, name);
+    construct_model(_model, path, name);
+	free(path);
 }

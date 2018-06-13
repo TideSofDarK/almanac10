@@ -14,59 +14,19 @@ include_directories(
         C:/workspace/libs/glad/include
 )
 
-add_executable(almanac10
-        camera.c
-        camera.h
-        config.c
-        config.h
-        creature.c
-        creature.h
-        debug.c
-        debug.h
-        game.c
-        game.h
-        glad.c
-        grid.c
-        grid.h
-        input.c
-        input.h
-        script.h
-        script.c
-        main.c
-        mesh.c
-        mesh.h
-        model.c
-        model.h
-        nuklear_init.h
-        projectile.c
-        projectile.h
-        renderer.c
-        renderer.h
-        shader.c
-        shader.h
-        sprite.c
-        sprite.h
-        stb_image.c
-        stb_image.h
-        texture.c
-        texture.h
-        transform.c
-        transform.h
-        ui.c
-        ui.h
-        util.c
-        util.h
-        vector.h
-        vertices.c
-        vertices.h
-        world.c
-        world.h
-        object.c
-        object.h
-        almanac10.rc)
+file(GLOB almanac10_src
+        "engine/*.h"
+        "engine/*.c"
+        )
+add_executable(almanac10 ${almanac10_src} almanac10.rc)
 
 target_link_libraries(almanac10
         assimp
         glfw
         lua
         )
+
+# Copy Lua scripts to assets directory
+add_custom_command(TARGET almanac10 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/scripts/ $<TARGET_FILE_DIR:almanac10>/assets/scripts/)

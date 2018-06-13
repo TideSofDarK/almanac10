@@ -14,8 +14,8 @@
 
 static inline void load_shader_from_file(GLchar ** dest, const char * shader)
 {
-    GLchar *full_path = malloc(MAXLEN);
-	snprintf(full_path, MAXLEN, "assets/shaders/%s", shader);
+    GLchar *full_path = NULL;
+	asprintf(&full_path, "assets/shaders/%s", shader);
 
     *dest = load_string_from_file(full_path);
     free(full_path);
