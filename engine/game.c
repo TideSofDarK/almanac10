@@ -3,12 +3,21 @@
 /* Global state */
 static Game* game = NULL;
 
-void init_game(GameState state, World** world)
+void init_game(GLFWwindow * window, World** world)
 {
 	game = malloc(sizeof(Game));
 
+	game->window = window;
+
+	game->state = GS_WORLD;
+
+	game->player = NULL;
+	construct_player(&game->player);
+
+	game->camera = NULL;
+	construct_camera(&game->camera);
+
 	game->worlds = NULL;
-	game->state = state;
 
 	if (world)
 	{
@@ -39,11 +48,23 @@ void shutdown_game()
 	free_precached_creatures();
 	free_cached_textures();
 
+	destruct_player(&game->player);
+
 	free(game);
 	game = NULL;
 }
 
-void insert_world(World** world, int make_active)
+GameState get_game_state()
+{
+	return game->state;
+}
+
+void set_game_state(GameState state)
+{
+	game->state = state;
+}
+
+void insert_world(World** world, bool make_active)
 {
 	vector_push_back(game->worlds, *world);
 	if (make_active)
@@ -57,24 +78,38 @@ void make_world_active(World** world)
 	game->active_world = *world;
 }
 
-void active_world(World** dest)
-{
-	if (game && game->active_world)
-	{
-		*dest = game->active_world;
-	}
-	else
-	{
-		*dest = NULL;
-	}
-}
-
 World** get_all_worlds()
 {
 	return game->worlds;
 }
 
-Camera active_camera()
+void active_window(GLFWwindow ** _window)
 {
-	return game->active_world->camera;
+	assert(game != NULL);
+	*_window = game->window;
+}
+
+void active_world(World** _world)
+{
+	assert(game != NULL);
+	if (game->active_world)
+	{
+		*_world = game->active_world;
+	}
+	else
+	{
+		*_world = NULL;
+	}
+}
+
+void active_player(Player ** _player)
+{
+	assert(game != NULL);
+	*_player = game->player;
+}
+
+void active_camera(Camera ** _camera)
+{
+	assert(game != NULL);
+	*_camera = game->camera;
 }

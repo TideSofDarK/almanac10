@@ -1,8 +1,11 @@
 #pragma once
 
+#include <GLFW/glfw3.h>
+
 #include "world.h"
 #include "camera.h"
 #include "vector.h"
+#include "player.h"
 
 typedef enum
 {
@@ -17,22 +20,35 @@ typedef enum
 	/* Ingame; inventory */
 	GS_INVENTORY,
 	/* Ingame; ESC-menu */
-	GS_PAUSED
+	GS_PAUSED,
+	/* Editor */
+	GS_EDITOR
 } GameState;
 
 typedef struct
 {
+	GLFWwindow * window;
+
 	GameState state;
-	World* active_world;
-	World** worlds;
+
+	Player * player;
+	Camera * camera;
+
+	World * active_world;
+	World ** worlds;
 } Game;
 
-void init_game(GameState, World**);
+void init_game(GLFWwindow *, World**);
 void shutdown_game();
 
-void insert_world(World**, int);
-void make_world_active(World**);
+GameState get_game_state();
+void set_game_state(GameState);
 
+void insert_world(World**, bool);
+void make_world_active(World**);
 World** get_all_worlds();
+
+void active_window(GLFWwindow **);
 void active_world(World**);
-Camera active_camera();
+void active_player(Player**);
+void active_camera(Camera**);

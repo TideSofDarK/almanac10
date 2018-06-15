@@ -5,3 +5,4 @@
 int asprintf (char **, const char *, ...);
 int vasprintf (char **, const char *, va_list);
 char* load_string_from_file(const char*);
+char* vec3_to_string(vec3);

@@ -9,7 +9,7 @@ typedef struct
 	vec3 scale;
 } Transform;
 
-Transform create_transform();
+void init_transform(Transform *);
 
 void euler_to_front(vec3, vec3);
 float transform_distance(Transform, Transform);

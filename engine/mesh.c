@@ -1,5 +1,7 @@
 #include "mesh.h"
 
+#include <glad/glad.h>
+
 void construct_mesh(Vertex* vertices, int* indices, Texture* texture, Mesh** _mesh)
 {
 	*_mesh = malloc(sizeof(Mesh));

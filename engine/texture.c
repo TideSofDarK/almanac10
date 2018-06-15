@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <string.h>
 
+#include <glad/glad.h>
 #include "stb_image.h"
 
 #include "vector.h"

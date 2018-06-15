@@ -1,5 +1,7 @@
 #include "grid.h"
 
+#include <glad/glad.h>
+
 #include "vertices.h"
 #include "renderer.h"
 #include "game.h"
@@ -28,7 +30,7 @@ void construct_grid()
 	glBindBuffer(GL_ARRAY_BUFFER, grid.VBO);
 	glBufferData(GL_ARRAY_BUFFER, buffer_size, vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL);
 	glEnableVertexAttribArray(0);
 
 	glBindVertexArray(0);
@@ -46,15 +48,18 @@ int is_grid_constructed()
 
 void draw_grid()
 {
-	Camera camera = active_camera();
+	Camera * camera = NULL;
+	active_camera(&camera);
+	if (camera == NULL)
+		return;
 
 	//glDisable(GL_DEPTH_TEST);
 
 	glBindVertexArray(grid.VAO);
 	use_shader(grid.shader);
 	set_uniform_mat4(grid.shader, "model", grid.model);
-	set_uniform_mat4(grid.shader, "view", camera.view);
-	set_uniform_mat4(grid.shader, "projection", camera.projection);
+	set_uniform_mat4(grid.shader, "view", camera->view);
+	set_uniform_mat4(grid.shader, "projection", camera->projection);
 
 	glLineWidth(0.5f);
 	for (unsigned int x = 0; x < GRID_SIZE; x++)

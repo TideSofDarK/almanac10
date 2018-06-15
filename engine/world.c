@@ -11,6 +11,9 @@
 #include "script.h"
 #include "creature.h"
 #include "sprite.h"
+#include "player.h"
+#include "game.h"
+#include "ui.h"
 
 /* Macros to clean up creatures, projectiles and so on */
 /* TODO: possible refactoring of this */
@@ -68,9 +71,9 @@ void construct_world(World ** _world, const char * name)
 	world->objects3d = NULL;
 	world->objects3d_to_remove = NULL;
 
-	world->camera = create_camera();
+	world->terrain = NULL;
 
-	world->name = _strdup(name);
+	world->name = strdup(name);
 
 	construct_world_lua_state(&world->L);
 }
@@ -83,7 +86,10 @@ void destruct_world(World ** _world)
 	remove_entities(world, creatures_to_remove, creatures, destruct_world_creature, 1);
 	remove_entities(world, objects3d_to_remove, objects3d, destruct_world_object3d, 1);
 
-    lua_close(world->L);
+	if (world->terrain != NULL)
+		destruct_terrain(&world->terrain);
+
+	lua_close(world->L);
 
 	free(world->name);
 	world->name = NULL;
@@ -124,85 +130,100 @@ void update_world(World* world, float delta_time)
 	remove_entities(world, creatures_to_remove, creatures, destruct_world_creature, 0);
 	remove_entities(world, objects3d_to_remove, objects3d, destruct_world_object3d, 0);
 
-	/* Update projectiles */
-	if (world->projectiles != NULL && !vector_empty(world->projectiles))
+	if (get_game_state() != GS_EDITOR)
 	{
-		for (size_t i = 0; i < vector_size(world->projectiles); ++i)
+		/* Determine cursor target */
+		float cx, cy;
+		cursor_position(&cx, &cy);
+		set_creature_under_cursor(get_sprite_under_cursor(world, (int)cx, (int)cy));
+
+		/* Update projectiles */
+		if (world->projectiles != NULL && !vector_empty(world->projectiles))
 		{
-			Projectile* projectile = world->projectiles[i];
-			if (projectile != NULL)
+			for (size_t i = 0; i < vector_size(world->projectiles); ++i)
 			{
-				update_projectile(projectile);
+				Projectile* projectile = world->projectiles[i];
+				if (projectile != NULL)
+				{
+					update_projectile(projectile);
 
-				if (projectile->dead)
-				{
-					if (projectile->sprite->animation_finished)
-						vector_push_back(world->projectiles_to_remove, (unsigned int)i);
-				}
-				else
-				{
-					/* TODO: proper collision checking/whatever */
-					if (projectile->transform.pos[1] <= 0.0f)
+					if (projectile->dead)
 					{
-						kill_projectile(projectile);
-						continue;
+						if (projectile->sprite->animation_finished)
+							vector_push_back(world->projectiles_to_remove, (unsigned int)i);
 					}
-
-					for (size_t i = 0; i < vector_size(world->creatures); ++i) {
-						Creature* creature = world->creatures[i];
-						if (creature != NULL)
+					else
+					{
+						/* TODO: proper collision checking/whatever */
+						if (projectile->transform.pos[1] <= 0.0f)
 						{
-							if (!creature->dead && transform_distance(projectile->transform, creature->transform) <= projectile->radius)
+							kill_projectile(projectile);
+							continue;
+						}
+
+						for (size_t i = 0; i < vector_size(world->creatures); ++i) {
+							Creature* creature = world->creatures[i];
+							if (creature != NULL)
 							{
-								kill_projectile(projectile);
-								creature->health = 0;
-								break;
+								if (!creature->dead && transform_distance(projectile->transform, creature->transform) <= projectile->radius)
+								{
+									kill_projectile(projectile);
+									creature->health = 0;
+									break;
+								}
 							}
 						}
 					}
 				}
 			}
 		}
-	}
 
-	/* Update creatures */
-	if (world->creatures != NULL && !vector_empty(world->creatures))
-	{
-		for (size_t i = 0; i < vector_size(world->creatures); ++i)
+		/* Update creatures */
+		if (world->creatures != NULL && !vector_empty(world->creatures))
 		{
-			Creature* creature = world->creatures[i];
-			if (creature != NULL)
+			for (size_t i = 0; i < vector_size(world->creatures); ++i)
 			{
-				if (!creature->dead && creature->health <= 0)
+				Creature* creature = world->creatures[i];
+				if (creature != NULL)
 				{
-					kill_creature(creature);
-					script_kill_creature(world->L, creature);
-				}
-				else
-				{
-					update_creature(creature);
-					script_update_creature(world->L, creature, delta_time);
+					if (!creature->dead && creature->health <= 0)
+					{
+						kill_creature(creature);
+						script_kill_creature(world->L, creature);
+					}
+					else
+					{
+						update_creature(creature);
+						script_update_creature(world->L, creature, delta_time);
+					}
 				}
 			}
 		}
-	}
 
-	/* Party controls */
-	update_camera(&world->camera, delta_time);
+		/* Player controls */
+		Player * player = NULL;
+		active_player(&player);
+		Camera* camera = NULL;
+		active_camera(&camera);
 
-	/* Projectile test */
-	if (get_control_state(CT_ATTACK) == BS_PRESSED)
-	{
-		Sprite* explosion = NULL;
-		sprite_particle(&explosion, "explosion", 64, 64);
+		if (player == NULL || camera == NULL)
+			return;
+		update_player(player, delta_time);
 
-		Projectile* projectile = NULL;
-		construct_projectile(&projectile, explosion);
+		/* Projectile test */
+		if (get_control_state(CT_ATTACK) == BS_PRESSED)
+		{
+			Sprite* explosion = NULL;
+			sprite_particle(&explosion, "explosion", 64, 64);
 
-		glm_vec_copy(world->camera.transform.pos, projectile->origin);
-		cursor_raycast(world->camera, projectile->direction);
+			Projectile* projectile = NULL;
+			construct_projectile(&projectile, explosion);
 
-		insert_projectile(world, projectile);
-		launch_projectile(projectile);
+			glm_vec_copy(camera->transform.pos, projectile->origin);
+			cursor_raycast(camera, projectile->direction);
+
+			insert_projectile(world, projectile);
+			launch_projectile(projectile);
+		}
 	}
 }

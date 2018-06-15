@@ -65,3 +65,11 @@ char* load_string_from_file(const char* filename)
 	}
 	return buf;
 }
+
+char* vec3_to_string(vec3 v)
+{
+	char* buffer = NULL;
+	asprintf (&buffer, "%f %f %f", v[0], v[1], v[2]);
+
+	return buffer;
+}

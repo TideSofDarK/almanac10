@@ -2,11 +2,9 @@
 
 #include <stdbool.h>
 
-#include <glad/glad.h>
-
 typedef struct
 {
-	GLuint ID;
+	unsigned int ID;
 	int w, h, channels;
 	char* filename;
 	bool loaded;

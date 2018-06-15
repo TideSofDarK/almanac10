@@ -42,9 +42,9 @@ void resize_render_textures(int, int);
 
 int get_sprite_under_cursor(World*, int, int);
 
-void draw_creature(Creature*, Camera);
-void draw_projectile(Projectile*, Camera);
-void draw_object3d(Object3D*, Camera);
+void draw_creature(Creature*, Camera*);
+void draw_projectile(Projectile*, Camera*);
+void draw_object3d(Object3D*, Camera*);
 void draw_world(World*);
 
 void start_model_rendering();

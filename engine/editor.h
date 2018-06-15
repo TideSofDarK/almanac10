@@ -1,7 +1,5 @@
 #pragma once
 
-#include "game.h"
-
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
 #define NK_INCLUDE_STANDARD_VARARGS
@@ -11,11 +9,10 @@
 #define NK_INCLUDE_DEFAULT_FONT
 #include "nuklear.h"
 
-typedef struct
-{
-	int creature_under_cursor;
-} UIState;
+#include "camera.h"
 
-void ui(struct nk_context*);
+void editor_ui(struct nk_context *);
+void update_editor(float);
+void toggle_editor();
 
-void set_creature_under_cursor(int);
+void editor_navigation(Camera *, float);

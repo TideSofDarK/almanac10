@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <malloc.h>
 
+#include <glad/glad.h>
 #include <assimp/types.h>
 
 #include "util.h"
@@ -12,19 +13,19 @@
 #define GEOMETRY 2
 #define FRAGMENT 3
 
-static inline void load_shader_from_file(GLchar ** dest, const char * shader)
+static inline void load_shader_from_file(char ** dest, const char * shader)
 {
-    GLchar *full_path = NULL;
+    char * full_path = NULL;
 	asprintf(&full_path, "assets/shaders/%s", shader);
 
     *dest = load_string_from_file(full_path);
     free(full_path);
 }
 
-static inline void check_compile_errors(GLuint shader, int type)
+static inline void check_compile_errors(unsigned int shader, int type)
 {
-	GLint success;
-	GLchar infoLog[1024];
+	int success;
+	char infoLog[1024];
 	if (type != PROGRAM)
 	{
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);

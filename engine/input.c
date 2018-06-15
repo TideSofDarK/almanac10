@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "config.h"
+#include "game.h"
 
 ButtonState input[GLFW_KEY_LAST];
 unsigned int input_map[CT_LAST];
@@ -17,6 +18,9 @@ void init_input()
 	}
 
 	/* TODO: Input map save/load */
+	input_map[CT_LMB] = GLFW_MOUSE_BUTTON_LEFT;
+	input_map[CT_RMB] = GLFW_MOUSE_BUTTON_RIGHT;
+
 	input_map[CT_FORWARD] = BTN_DEFAULT_FORWARD;
 	input_map[CT_BACK] = BTN_DEFAULT_BACK;
 	input_map[CT_LEFT] = BTN_DEFAULT_LEFT;
@@ -29,13 +33,26 @@ void init_input()
 	input_map[CT_CAMERA_HOME] = BTN_DEFAULT_CAMERA_HOME;
 
 	input_map[CT_ATTACK] = BTN_DEFAULT_ATTACK;
+
+	input_map[CT_EDITOR] = BTN_DEFAULT_EDITOR;
 }
 
-void update_input(GLFWwindow* window)
+void update_input()
 {
+	GLFWwindow * window;
+	active_window(&window);
+
 	for (int i = 0; i < (int)CT_LAST; i++)
 	{
-		int press = glfwGetKey(window, input_map[i]) == GLFW_PRESS;
+		int press;
+		if (i == CT_LMB || i == CT_RMB)
+		{
+			press = glfwGetMouseButton(window, input_map[i]) == GLFW_PRESS;
+		}
+		else
+		{
+			press = glfwGetKey(window, input_map[i]) == GLFW_PRESS;
+		}
 		if (press)
 		{
 			if (input[input_map[i]] == BS_NONE)
@@ -70,9 +87,22 @@ ButtonState get_control_state(ControlType btn)
 	return get_button_state(input_map[btn]);
 }
 
-int is_press_or_pressed(ControlType btn)
+bool is_press_or_pressed(ControlType btn)
 {
-	return get_control_state(btn) == BS_PRESS || get_control_state(btn) == BS_PRESSED;
+	return get_control_state(btn) == BS_PRESS || is_pressed(btn);
+}
+
+bool is_pressed(ControlType btn)
+{
+	return get_control_state(btn) == BS_PRESSED;
+}
+
+void set_cursor_hidden(bool hidden)
+{
+	GLFWwindow * window;
+	active_window(&window);
+
+	glfwSetInputMode(window, GLFW_CURSOR, hidden ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 }
 
 void cursor_position(float* _cursorX, float* _cursorY)
@@ -81,7 +111,7 @@ void cursor_position(float* _cursorX, float* _cursorY)
 	*_cursorY = (float)cursorY;
 }
 
-void cursor_raycast(Camera camera, vec3 direction)
+void cursor_raycast(Camera * camera, vec3 direction)
 {
 	float cursorX, cursorY;
 	cursor_position(&cursorX, &cursorY);
@@ -90,7 +120,7 @@ void cursor_raycast(Camera camera, vec3 direction)
 	float h = (float)get_config().h;
 
 	mat4 world_to_camera;
-	glm_mat4_mul(camera.projection, camera.view, world_to_camera);
+	glm_mat4_mul(camera->projection, camera->view, world_to_camera);
 	glm_mat4_inv(world_to_camera, world_to_camera);
 
 	vec4 in;

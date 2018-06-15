@@ -1,7 +1,5 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
@@ -12,11 +10,11 @@
 #include "creature.h"
 #include "projectile.h"
 #include "object.h"
+#include "terrain.h"
 
 typedef struct
 {
-	//unsigned int ID;
-	Camera camera;
+	char * name;
 
 	Projectile** projectiles;
 	unsigned int* projectiles_to_remove;
@@ -27,7 +25,7 @@ typedef struct
     Object3D** objects3d;
     unsigned int* objects3d_to_remove;
 
-	char * name;
+    Terrain * terrain;
 
 	lua_State * L;
 } World;

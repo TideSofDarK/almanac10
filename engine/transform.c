@@ -1,21 +1,17 @@
 #include "transform.h"
 
-Transform create_transform()
+void init_transform(Transform * transform)
 {
-	Transform transform;
-
-	glm_vec_copy(GLM_VEC3_ZERO, transform.pos);
-	glm_vec_copy(GLM_VEC3_ZERO, transform.euler);
-	glm_vec_copy(GLM_VEC3_ONE, transform.scale);
-
-	return transform;
+	glm_vec_copy(GLM_VEC3_ZERO, transform->pos);
+	glm_vec_copy(GLM_VEC3_ZERO, transform->euler);
+	glm_vec_copy(GLM_VEC3_ONE, transform->scale);
 }
 
 void euler_to_front(vec3 euler, vec3 dest)
 {
-	float x = (float)cos(glm_rad(euler[1])) * (float)cos(glm_rad(euler[0]));
-	float y = (float)sin(glm_rad(euler[1]));
-	float z = (float)cos(glm_rad(euler[1])) * (float)sin(glm_rad(euler[0]));
+	float x = cosf(glm_rad(euler[1])) * (float)cosf(glm_rad(euler[0]));
+	float y = sinf(glm_rad(euler[1]));
+	float z = cosf(glm_rad(euler[1])) * (float)sinf(glm_rad(euler[0]));
 	glm_vec_copy((vec3) { x, y, z }, dest);
 	glm_normalize(dest);
 }

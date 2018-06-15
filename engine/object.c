@@ -9,7 +9,7 @@ void construct_object3d(Object3D** _object3d, Model * model)
 
     object3d->model = model;
 
-    object3d->transform = create_transform();
+    init_transform(&object3d->transform);
 }
 
 void destruct_object3d(Object3D** _object3d)

@@ -8,6 +8,8 @@
 #include "grid.h"
 #include "object.h"
 #include "world.h"
+#include "game.h"
+#include "terrain.h"
 
 /* Global state */
 SpriteRenderer sprite_renderer;
@@ -145,6 +147,10 @@ void resize_render_textures(int width, int height)
 
 int get_sprite_under_cursor(World* world, int cx, int cy)
 {
+	Camera * camera = NULL;
+	active_camera(&camera);
+	if (camera == NULL)
+		return 0;
 	/* TODO: check if game is in WORLD state */
 	/* TODO: check if its possible to remake it into FBO */
 	start_sprite_rendering();
@@ -163,7 +169,7 @@ int get_sprite_under_cursor(World* world, int cx, int cy)
 			int g = (seed & 0x0000FF00) >> 8;
 			int b = (seed & 0x00FF0000) >> 16;
 			set_uniform_vec4(sprite_renderer.shader, "solidColor", (float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
-			draw_creature(creature, world->camera);
+			draw_creature(creature, camera);
 		}
 	}
 	set_uniform_vec4(sprite_renderer.shader, "solidColor", 0.0f, 0.0f, 0.0f, 0.0f);
@@ -185,7 +191,7 @@ int get_sprite_under_cursor(World* world, int cx, int cy)
 	return (int)fmax(picked_id, 0);
 }
 
-static inline void draw_sprite(Sprite* sprite, Camera camera, vec3 pos, int invert, int direction)
+static inline void draw_sprite(Sprite* sprite, Camera* camera, vec3 pos, int invert, int direction)
 {
 	glBindVertexArray(sprite_renderer.render_data[sprite_renderer.mode].VAO);
 
@@ -203,8 +209,8 @@ static inline void draw_sprite(Sprite* sprite, Camera camera, vec3 pos, int inve
 	}
 	glBindTexture(GL_TEXTURE_2D, ID);
 
-	set_uniform_mat4(sprite_renderer.shader, "view", camera.view);
-	set_uniform_mat4(sprite_renderer.shader, "projection", camera.projection);
+	set_uniform_mat4(sprite_renderer.shader, "view", camera->view);
+	set_uniform_mat4(sprite_renderer.shader, "projection", camera->projection);
 	set_uniform_vec3(sprite_renderer.shader, "pos", pos);
 	set_uniform_float(sprite_renderer.shader, "aspectRatio", (float)sprite->w / (float)sprite->h);
 	set_uniform_int(sprite_renderer.shader, "sheetPosition", sprite->sheet_position);
@@ -214,21 +220,45 @@ static inline void draw_sprite(Sprite* sprite, Camera camera, vec3 pos, int inve
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-static inline void draw_mesh(Mesh* mesh, Camera camera)
+static inline void draw_terrain(Terrain * terrain, Camera* camera)
+{
+	mat4 model;
+	glm_mat4_identity(model);
+	float scale = (float)terrain->grid_size;
+	glm_scale(model, (vec3) { scale, scale, scale });
+
+	/* TODO: Grid forces me to do this; probably will have to remove it later */
+	use_shader(model_renderer.shader);
+
+	glActiveTexture(GL_TEXTURE0);
+	set_uniform_int(model_renderer.shader, "texture_diffuse1", 0);
+	glBindTexture(GL_TEXTURE_2D, 6);
+
+	set_uniform_mat4(model_renderer.shader, "model", model);
+	set_uniform_mat4(model_renderer.shader, "view", camera->view);
+	set_uniform_mat4(model_renderer.shader, "projection", camera->projection);
+
+	glBindVertexArray(terrain->render_data.VAO);
+	glDrawElements(GL_TRIANGLES, (unsigned int)vector_size(terrain->indices), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
+
+static inline void draw_mesh(Mesh* mesh, Camera* camera)
 {
 	glActiveTexture(GL_TEXTURE0);
 	set_uniform_int(model_renderer.shader, "texture_diffuse1", 0);
 	glBindTexture(GL_TEXTURE_2D, mesh->texture->ID);
 
-	set_uniform_mat4(model_renderer.shader, "view", camera.view);
-	set_uniform_mat4(model_renderer.shader, "projection", camera.projection);
+	set_uniform_mat4(model_renderer.shader, "view", camera->view);
+	set_uniform_mat4(model_renderer.shader, "projection", camera->projection);
 
 	glBindVertexArray(mesh->render_data.VAO);
 	glDrawElements(GL_TRIANGLES, (unsigned int)vector_size(mesh->indices), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
-static inline void draw_model(Model* model, Camera camera)
+static inline void draw_model(Model* model, Camera* camera)
 {
 	for (unsigned int i = 0; i < vector_size(model->meshes); i++)
 	{
@@ -239,7 +269,7 @@ static inline void draw_model(Model* model, Camera camera)
 	}
 }
 
-void draw_creature(Creature* creature, Camera camera)
+void draw_creature(Creature* creature, Camera* camera)
 {
 	assert(creature != NULL);
 
@@ -250,7 +280,7 @@ void draw_creature(Creature* creature, Camera camera)
 	draw_sprite(creature->sprite, camera, sprite_transform.pos, index > 0, abs(index));
 }
 
-void draw_projectile(Projectile* projectile, Camera camera)
+void draw_projectile(Projectile* projectile, Camera* camera)
 {
 	assert(projectile != NULL);
 
@@ -259,7 +289,7 @@ void draw_projectile(Projectile* projectile, Camera camera)
 	draw_sprite(projectile->sprite, camera, projectile_transform.pos, 0, 0);
 }
 
-void draw_object3d(Object3D* object3d, Camera camera)
+void draw_object3d(Object3D* object3d, Camera* camera)
 {
 	assert(object3d != NULL);
 
@@ -268,7 +298,7 @@ void draw_object3d(Object3D* object3d, Camera camera)
 	glm_translate(model, object3d->transform.pos);
 	glm_scale(model, (vec3) { 0.01f, 0.01f, 0.01f });
 
-	/* TODO: grid forces me to do this; probably will have to remove it later */
+	/* TODO: Grid forces me to do this; probably will have to remove it later */
 	use_shader(model_renderer.shader);
 	set_uniform_mat4(model_renderer.shader, "model", model);
 
@@ -277,6 +307,11 @@ void draw_object3d(Object3D* object3d, Camera camera)
 
 void draw_world(World* world)
 {
+	Camera * camera = NULL;
+	active_camera(&camera);
+	if (camera == NULL)
+		return;
+
 	reset_opengl_settings();
 	glViewport(0, 0, (GLuint)(get_config().w), (GLuint)(get_config().h));
 
@@ -284,12 +319,12 @@ void draw_world(World* world)
 	start_sprite_rendering();
 	for (size_t i = 0; i < vector_size(world->projectiles); i++)
 	{
-		draw_projectile(world->projectiles[i], world->camera);
+		draw_projectile(world->projectiles[i], camera);
 	}
 	set_sprite_origin_mode(OM_BOTTOM);
 	for (size_t i = 0; i < vector_size(world->creatures); i++)
 	{
-		draw_creature(world->creatures[i], world->camera);
+		draw_creature(world->creatures[i], camera);
 	}
 	finish_sprite_rendering();
 
@@ -297,9 +332,11 @@ void draw_world(World* world)
 	start_model_rendering();
 	/* TODO: refactor grid things */
 	draw_grid();
+	if (world->terrain != NULL)
+		draw_terrain(world->terrain, camera);
 	for (size_t i = 0; i < vector_size(world->objects3d); i++)
 	{
-		draw_object3d(world->objects3d[i], world->camera);
+		draw_object3d(world->objects3d[i], camera);
 	}
 	finish_model_rendering();
 

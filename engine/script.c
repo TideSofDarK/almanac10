@@ -37,18 +37,17 @@ static inline void lua_toptype(lua_State *L)
  *
  */
 
-static inline int append_path(lua_State *L) /* Makes require() skip '/assets/scripts/' */
+static inline void append_path(lua_State *L) /* Makes require() skip '/assets/scripts/' */
 {
 	lua_getglobal(L, "package");
 	lua_getfield(L, -1, "path");
-	char* npath = malloc(1024);
-	const char * s2 = lua_tostring(L, -1);
-	snprintf(npath, 1024, "%s;%s", SCRIPTS_PATH, lua_tostring(L, -1));
+	char* path = NULL;
+    asprintf (&path, "%s;%s", SCRIPTS_PATH, lua_tostring(L, -1));
 	lua_pop(L, 1);
-	lua_pushstring(L, npath);
+	lua_pushstring(L, path);
 	lua_setfield(L, -2, "path");
 	lua_pop(L, 1);
-	return 0;
+	free(path);
 }
 
 static inline int require(lua_State *L, const char *name)

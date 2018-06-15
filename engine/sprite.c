@@ -129,10 +129,10 @@ int get_sheet_length(Sprite* sprite)
 	return sprite->textures[ANIM_SLOT(sprite->anim_state, 0)]->w / sprite->textures[ANIM_SLOT(sprite->anim_state, 0)]->h;
 }
 
-int determine_orientation(Transform transform, Camera camera)
+int determine_orientation(Transform transform, Camera* camera)
 {
 	vec3 diff;
-	glm_vec_sub(camera.transform.pos, transform.pos, diff);
+	glm_vec_sub(camera->transform.pos, transform.pos, diff);
 	
 	glm_vec_rotate(diff, glm_rad(transform.euler[0]), (vec3) { 0.0f, 1.0f, 0.0f } );
 

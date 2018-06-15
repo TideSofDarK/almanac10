@@ -50,7 +50,7 @@ void construct_creature(Creature** _creature, CreatureData const * creature_data
 	*_creature = malloc(sizeof(Creature));
 	Creature* creature = *_creature;
 
-	creature->transform = create_transform();
+    init_transform(&creature->transform);
 	glm_vec_copy(pos, creature->transform.pos);
 	glm_vec_copy(pos, creature->start_pos);
 

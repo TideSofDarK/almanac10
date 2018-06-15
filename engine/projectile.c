@@ -17,7 +17,7 @@ void construct_projectile(Projectile** _projectile, Sprite* sprite)
 	glm_vec_one(projectile->direction);
 	glm_vec_one(projectile->assumed_target);
 
-	projectile->transform = create_transform();
+    init_transform(&projectile->transform);
 }
 
 void destruct_projectile(Projectile** _projectile)

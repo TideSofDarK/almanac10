@@ -9,7 +9,8 @@ typedef struct
 	mat4 projection;
 } Camera;
 
-Camera create_camera();
+void construct_camera(Camera **);
+void destruct_camera(Camera **);
 
 void camera_direction(Camera*, vec3);
 void camera_right(Camera*, vec3);

@@ -1,11 +1,13 @@
 #include "ui.h"
 
 #include "vector.h"
-#include "game.h"
 #include "config.h"
 #include "debug.h"
+#include "input.h"
 
-void tooltip_position(int w, int h, int cx, int cy, int *start_x, int *start_y)
+static UIState ui_state;
+
+void tooltip_position(int *start_x, int *start_y, int w, int h, int cx, int cy)
 {
 	Config config = get_config();
 
@@ -45,7 +47,7 @@ void cursor_target_extended_info(struct nk_context* ctx, int cx, int cy, int cre
 	int w = 150;
 	int h = 250;
 	int start_x, start_y;
-	tooltip_position(w, h, cx, cy, &start_x, &start_y);
+	tooltip_position(&start_x, &start_y, w, h, cx, cy);
 	if (nk_begin(ctx, "Cursor Target Extended Info", nk_rect((float)start_x, (float)start_y, (float)w, (float)h),
 		NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE | NK_WINDOW_BORDER ))
 	{
@@ -90,21 +92,24 @@ void cursor_target_info(struct nk_context* ctx, int creature_under_cursor)
 	nk_end(ctx);
 }
 
-void ui(struct nk_context* ctx, GLFWwindow* window, UIState ui_state)
+void ui(struct nk_context* ctx)
 {
-	World* world;
+	World* world = NULL;
 	active_world(&world);
-
-	if (!world || world->creatures == NULL)
+	if (world == NULL)
 		return;
 
 	debug_world(ctx);
+
+	if (world->creatures == NULL)
+	    return;
+
 	cursor_target_info(ctx, ui_state.creature_under_cursor);
 
-	int rmb_press = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
-	double dcx, dcy;
+	int rmb_press = is_press_or_pressed(CT_RMB);
+	float dcx, dcy;
 	int cx, cy;
-	glfwGetCursorPos(window, &dcx, &dcy);
+	cursor_position(&dcx, &dcy);
 	cx = (int)dcx;
 	cy = (int)dcy;
 
@@ -112,10 +117,15 @@ void ui(struct nk_context* ctx, GLFWwindow* window, UIState ui_state)
 	if (rmb_press && valid_sprite && ui_state.creature_under_cursor >= 0)
 	{
 		cursor_target_extended_info(ctx, cx, cy, ui_state.creature_under_cursor);
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		set_cursor_hidden(true);
 	}
 	else
 	{
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		set_cursor_hidden(false);
 	}
+}
+
+void set_creature_under_cursor(int creature_under_cursor)
+{
+	ui_state.creature_under_cursor = creature_under_cursor;
 }

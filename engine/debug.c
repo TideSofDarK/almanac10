@@ -1,25 +1,17 @@
 #include "debug.h"
 
-#include <string.h>
-
 #include "config.h"
 #include "game.h"
-
-char* vec3_to_string(vec3 v)
-{	
-	size_t s = (sizeof(char) * 8 * 4);
-	char* buffer = malloc(s);
-	snprintf(buffer, s, "%f %f %f", v[0], v[1], v[2]);
-
-	return buffer;
-}
+#include "util.h"
 
 void debug_world(struct nk_context *ctx)
 {
-	World* world;
+	World* world = NULL;
 	active_world(&world);
+	Camera* camera = NULL;
+	active_camera(&camera);
 
-	if (!world)
+	if (world == NULL || camera == NULL)
 		return;
 
 	float font_size = 17;
@@ -36,8 +28,6 @@ void debug_world(struct nk_context *ctx)
 		if (nk_group_begin(ctx, "Player/Camera",
 			NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_DYNAMIC))
 		{
-			Camera* camera = &world->camera;
-
 			char* b = vec3_to_string(camera->transform.pos);
 			nk_layout_row_dynamic(ctx, font_size, 1);
 			nk_label(ctx, b, NK_TEXT_LEFT);

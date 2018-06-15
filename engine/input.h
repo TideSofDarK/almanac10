@@ -17,8 +17,13 @@
 
 #define BTN_DEFAULT_ATTACK GLFW_KEY_F
 
+#define BTN_DEFAULT_EDITOR GLFW_KEY_F6
+
 typedef enum
 {
+	CT_LMB,
+	CT_RMB,
+
 	CT_FORWARD,
 	CT_BACK,
 	CT_LEFT,
@@ -31,6 +36,8 @@ typedef enum
 	CT_CAMERA_HOME,
 
 	CT_ATTACK,
+
+	CT_EDITOR,
 
 	CT_LAST
 } ControlType;
@@ -45,11 +52,13 @@ typedef enum
 
 void init_input();
 
-void update_input(GLFWwindow*);
+void update_input();
 
 ButtonState get_control_state(ControlType btn);
-int is_press_or_pressed(ControlType btn);
+bool is_press_or_pressed(ControlType btn);
+bool is_pressed(ControlType btn);
 
+void set_cursor_hidden(bool);
 void cursor_position(float*, float*);
 
-void cursor_raycast(Camera, vec3);
+void cursor_raycast(Camera*, vec3);

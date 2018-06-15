@@ -70,4 +70,4 @@ void update_sprite(Sprite*);
 void play_sprite_animation(Sprite*, AnimationState);
 
 int get_sheet_length(Sprite*);
-int determine_orientation(Transform, Camera);
+int determine_orientation(Transform, Camera*);

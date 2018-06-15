@@ -7,6 +7,7 @@
 
 #include "stb_image.h"
 
+#include "game.h"
 #include "util.h"
 #include "world.h"
 #include "config.h"
@@ -14,10 +15,11 @@
 #include "renderer.h"
 #include "ui.h"
 #include "debug.h"
-#include "game.h"
+#include "editor.h"
 #include "creature.h"
 #include "input.h"
 #include "script.h"
+#include "terrain.h"
 
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
@@ -31,25 +33,16 @@
 #include "nuklear.h"
 #include "nuklear_init.h"
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-	{
-		printf("LMB pressed");
-	}
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
-	{
-	}
-}
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	/* TODO: attempt to fix memory allocation */
-	World* world = NULL;
-	active_world(&world);
-	camera_projection(&world->camera, get_config().fov, (float)width, (float)height);
+	Camera * camera = NULL;
+	active_camera(&camera);
+	if (camera == NULL)
+		return;
+	camera_projection(camera, get_config().fov, (float)width, (float)height);
 
-	config_window_size(width, height);
+	config_window_size((unsigned)width, (unsigned)height);
 	resize_render_textures(width, height);
 }
 
@@ -90,7 +83,6 @@ int main(int argc, char *argv[])
 	if (window == NULL) { printf("Failed to initialize window\n"); glfwTerminate(); return -1; }
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSwapInterval(1);
 	set_window_icon(window);
 
@@ -113,7 +105,7 @@ int main(int argc, char *argv[])
 	World* world1 = NULL;
 	construct_world(&world1, "tatalia");
 
-	init_game(GS_WORLD, &world1);
+	init_game(window, &world1);
 	init_renderers();
 	init_input();
 
@@ -129,6 +121,8 @@ int main(int argc, char *argv[])
 	spawn_creature(world1, "minotaur", (vec3) { 1.0f, 0.0f, 0.0f });
     spawn_creature(world1, "minotaur_warrior", (vec3) { -1.0f, 0.0f, 0.0f });
     spawn_creature(world1, "black_dragon", (vec3) { 0.0f, 0.0f, 0.0f });
+
+    World* world = NULL;
 
 	/* Delta time calculations */
 	float last_frame	= 0.0f;
@@ -151,30 +145,39 @@ int main(int argc, char *argv[])
 		}
 		frames++;
 
-		World* world = NULL;
+		glfwPollEvents();
+        update_input();
+
+        if (is_pressed(CT_EDITOR))
+        {
+			toggle_editor();
+        }
+
 		active_world(&world);
 		if (world == NULL)
 			break;
 
-		/* Determine cursor target */
-		double cx, cy;
-		glfwGetCursorPos(window, &cx, &cy);
-		int sprite_under_cursor = get_sprite_under_cursor(world, (int)cx, (int)cy);
+		if (get_game_state() == GS_EDITOR)
+        {
+            update_editor(delta_time);
+        }
 
 		/* Process input and update world */
-		glfwPollEvents();
-		update_input(window);
 		update_world(world, delta_time);
 		
 		/* Terrain, Props, Sprites,.. */
 		draw_world(world);
 
-		/* UI, Debug */
+		/* UI, Editor, Debug */
 		nk_glfw3_new_frame();
-		ui(ctx, window, (UIState)
+		if (get_game_state() == GS_EDITOR)
 		{
-			sprite_under_cursor
-		});
+			editor_ui(ctx);
+		}
+		else
+		{
+			ui(ctx);
+		}
 		nk_glfw3_render(NK_ANTI_ALIASING_ON, 512 * 1024, 128 * 1024);
 
 		glfwSwapBuffers(window);

@@ -1,15 +1,13 @@
 #pragma once
 
-#include <glad/glad.h>
-
 #include <cglm/cglm.h>
 
 typedef struct
 {
-	GLuint ID;
-	GLchar* vertex_shader_source;
-	GLchar* fragment_shader_source;
-	GLchar* geometry_shader_source;
+	unsigned int ID;
+	char * vertex_shader_source;
+	char * fragment_shader_source;
+	char * geometry_shader_source;
 } Shader;
 
 void construct_shader(Shader**, const char*, const char*, const char*);
