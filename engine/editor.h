@@ -20,8 +20,9 @@ typedef enum
 
 typedef struct
 {
+    Transform transform;
     vec3 * value;
-    float scale;
+    vec4 color;
 } Gizmo;
 
 void shutdown_editor();

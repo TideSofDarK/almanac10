@@ -269,21 +269,19 @@ static inline void draw_terrain(Terrain * terrain)
 	glBindVertexArray(0);
 }
 
-static inline void draw_sphere(Transform transform, float scale)
+static inline void draw_sphere(Transform transform, float scale, vec4 color)
 {
 	mat4 model;
 	transform_to_mat4(transform, model);
 
-	glActiveTexture(GL_TEXTURE0);
-	set_uniform_int(model_renderer.shader, "texture_diffuse1", 0);
-	/* TODO: Terrain textures */
-	glBindTexture(GL_TEXTURE_2D, 3);
-
+	set_uniform_vec4(model_renderer.shader, "solid_color", color[0], color[1], color[2], color[3]);
 	set_uniform_mat4(model_renderer.shader, "model", model);
 
 	glBindVertexArray(primitive_sphere->meshes[0]->render_data.VAO);
 	glDrawElements(GL_TRIANGLES, (unsigned int)vector_size(primitive_sphere->meshes[0]->indices), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
+
+	set_uniform_vec4(model_renderer.shader, "solid_color", 0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 static inline void draw_mesh(Mesh* mesh)
@@ -375,11 +373,7 @@ void draw_world(World* world)
 		Gizmo * gizmos = get_gizmos();
 		for (size_t i = 0; i < vector_size(gizmos); i++)
 		{
-			Transform transform;
-			init_transform(&transform);
-			glm_vec_copy(*gizmos[i].value, transform.pos);
-			glm_vec_mul(transform.pos, (vec3){gizmos[i].scale,gizmos[i].scale,gizmos[i].scale}, transform.pos);
-			draw_sphere(transform, 1.0f);
+			draw_sphere(gizmos[i].transform, 1.0f, gizmos[i].color);
 		}
 	}
 

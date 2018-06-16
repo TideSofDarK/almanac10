@@ -7,10 +7,15 @@
 #include "terrain.h"
 #include "world.h"
 #include "mesh.h"
+#include "camera.h"
+
+#define GIZMO_RED (vec4){1.0f,0.0f,0.0f,1.0f}
+#define GIZMO_GREEN (vec4){0.0f,1.0f,0.0f,1.0f}
 
 static EditorMode editor_mode = EM_TERRAIN;
 
 static Gizmo * gizmos = NULL;
+static Gizmo * selected_gizmo = NULL;
 
 static World * world = NULL;
 static World * previous_world = NULL;
@@ -24,17 +29,45 @@ void shutdown_editor()
     previous_world = NULL;
 }
 
-static inline void rebuild_terrain_gizmos(Terrain * terrain)
+static inline void select_gizmo(int index)
+{
+    if (selected_gizmo != NULL)
+    {
+        glm_vec4_copy(GIZMO_RED, selected_gizmo->color);
+    }
+
+    selected_gizmo = &gizmos[index];
+
+    glm_vec4_copy(GIZMO_GREEN, selected_gizmo->color);
+}
+
+static inline void clear_gizmos()
 {
     if (gizmos != NULL)
+    {
         vector_free(gizmos);
+        gizmos = NULL;
+        selected_gizmo = NULL;
+    }
+}
+
+static inline void rebuild_terrain_gizmos(Terrain * terrain)
+{
+    clear_gizmos();
+
+    float scale = (float)terrain->grid_size;
 
     for (size_t i = 0; i < vector_size(terrain->vertices); ++i)
     {
         Gizmo gizmo;
 
         gizmo.value = &terrain->vertices[i].pos;
-        gizmo.scale = (float)terrain->grid_size;
+
+        glm_vec4_copy(GIZMO_RED, gizmo.color);
+
+        init_transform(&gizmo.transform);
+        glm_vec_copy(*gizmo.value, gizmo.transform.pos);
+        glm_vec_mul(gizmo.transform.pos, (vec3){scale,scale,scale}, gizmo.transform.pos);
 
         vector_push_back(gizmos, gizmo);
     }
@@ -87,12 +120,51 @@ void update_editor()
     if (camera == NULL)
         return;
 
-//    bool pressed = is_press_or_pressed(CT_LMB);
-//    if (pressed)
-//    {
-//        world->terrain->vertices[rand() % vector_size(world->terrain->vertices)].pos[1] = ((float)rand() / (float)(RAND_MAX / (0.25f))) - 0.0125f;
-//        rebuild_terrain(world->terrain);
-//    }
+    /* Gizmos hit test */
+    if (get_control_state(CT_LMB) == BS_PRESSED)
+    {
+        vec3 origin, direction;
+        cursor_raycast(camera, origin, direction);
+
+        vec3 line;
+        glm_vec_copy(direction, line);
+
+        line[0] *= 8.0f;
+        line[1] *= 8.0f;
+        line[2] *= 8.0f;
+
+        glm_vec_add(origin, line, line);
+
+        for (size_t i = 0; i < vector_size(gizmos); i++)
+        {
+            vec3 p1;
+            glm_vec_copy(origin, p1);
+            vec3 p2;
+            glm_vec_copy(line, p2);
+            vec3 p3;
+            glm_vec_copy(gizmos[i].transform.pos, p3);
+            float r = 0.1f;
+
+            float x1 = p1[0]; float y1 = p1[1]; float z1 = p1[2];
+            float x2 = p2[0]; float y2 = p2[1]; float z2 = p2[2];
+            float x3 = p3[0]; float y3 = p3[1]; float z3 = p3[2];
+
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+            float dz = z2 - z1;
+
+            float a = dx*dx + dy*dy + dz*dz;
+            float b = 2.0f * (dx * (x1 - x3) + dy * (y1 - y3) + dz * (z1 - z3));
+            float c = x3*x3 + y3*y3 + z3*z3 + x1*x1 + y1*y1 + z1*z1 - 2.0f * (x3*x1 + y3*y1 + z3*z1) - r*r;
+
+            float test = b*b - 4.0f*a*c;
+
+            if (test >= 0.0f)
+            {
+                select_gizmo((int)i);
+            }
+        }
+    }
 
     editor_navigation(camera);
 }

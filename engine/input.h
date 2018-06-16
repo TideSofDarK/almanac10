@@ -63,4 +63,4 @@ bool is_cursor_inside_window();
 void set_cursor_hidden(bool);
 void cursor_position(float*, float*);
 
-void cursor_raycast(Camera*, vec3);
+void cursor_raycast(Camera*, vec3, vec3);

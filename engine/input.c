@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "game.h"
+#include "camera.h"
 
 ButtonState input[GLFW_KEY_LAST];
 unsigned int input_map[CT_LAST];
@@ -117,16 +118,16 @@ void set_cursor_hidden(bool hidden)
 	glfwSetInputMode(window, GLFW_CURSOR, hidden ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 }
 
-void cursor_position(float* _cursorX, float* _cursorY)
+void cursor_position(float* _cx, float* _cy)
 {
-	*_cursorX = (float)cx;
-	*_cursorY = (float)cy;
+	*_cx = (float)cx;
+	*_cy = (float)cy;
 }
 
-void cursor_raycast(Camera * camera, vec3 direction)
+void cursor_raycast(Camera * camera, vec3 origin, vec3 direction)
 {
-	float cursorX, cursorY;
-	cursor_position(&cursorX, &cursorY);
+	float fcx, fcy;
+	cursor_position(&fcx, &fcy);
 
 	float w = (float)get_config().w;
 	float h = (float)get_config().h;
@@ -135,10 +136,32 @@ void cursor_raycast(Camera * camera, vec3 direction)
 	glm_mat4_mul(camera->projection, camera->view, world_to_camera);
 	glm_mat4_inv(world_to_camera, world_to_camera);
 
-	vec4 in;
-	glm_vec4_copy((vec4) { ((2.0f*(cursorX / w)) - 1.0f), ((2.0f*(cursorY / h)) - 1.0f) * -1.0f, 1.0f, 1.0f }, in);
-	glm_mat4_mulv(world_to_camera, in, in);
-	glm_vec4_copy((vec4) { in[0] / in[3], in[1] / in[3], in[2] / in[3], 1.0f / in[3] }, in);
-	glm_vec3(in, direction);
+	vec4 ray_start_ndc = {
+			(fcx/w - 0.5f) * 2.0f,
+			(fcy/h - 0.5f) * -2.0f,
+			-1.0f,
+			1.0f
+	};
+	vec4 ray_end_ndc = {
+			((float)fcx/(float)w - 0.5f) * 2.0f,
+			((float)fcy/(float)h - 0.5f) * -2.0f,
+			0.0,
+			1.0f
+	};
+
+	vec4 ray_start_world;
+	glm_mat4_mulv(world_to_camera, ray_start_ndc, ray_start_world);
+	glm_vec4_divs(ray_start_world, ray_start_world[3], ray_start_world);
+
+	vec4 ray_end_world;
+	glm_mat4_mulv(world_to_camera, ray_end_ndc, ray_end_world);
+	glm_vec4_divs(ray_end_world, ray_end_world[3], ray_end_world);
+
+	vec4 d;
+	glm_vec4_sub(ray_end_world, ray_start_world, d);
+	glm_vec3(d, direction);
 	glm_normalize(direction);
+
+
+	glm_vec3(ray_start_world, origin);
 }

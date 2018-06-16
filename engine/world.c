@@ -222,8 +222,7 @@ void update_world(World* world)
 			Projectile* projectile = NULL;
 			construct_projectile(&projectile, explosion);
 
-			glm_vec_copy(camera->transform.pos, projectile->origin);
-			cursor_raycast(camera, projectile->direction);
+			cursor_raycast(camera, projectile->origin, projectile->direction);
 
 			insert_projectile(world, projectile);
 			launch_projectile(projectile);
