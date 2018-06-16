@@ -21,7 +21,7 @@ enum nk_glfw_init_state{
 };
 
 NK_API struct nk_context*   nk_glfw3_init(GLFWwindow *win, enum nk_glfw_init_state);
-NK_API void                 nk_glfw3_shutdown(void);
+NK_API void                 shutdown_nuklear(void);
 NK_API void                 nk_glfw3_font_stash_begin(struct nk_font_atlas **atlas);
 NK_API void                 nk_glfw3_font_stash_end(void);
 NK_API void                 nk_glfw3_new_frame(void);
@@ -481,7 +481,7 @@ nk_glfw3_new_frame(void)
 }
 
 NK_API
-void nk_glfw3_shutdown(void)
+void shutdown_nuklear(void)
 {
     nk_font_atlas_clear(&glfw.atlas);
     nk_free(&glfw.ctx);

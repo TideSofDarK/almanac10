@@ -103,7 +103,8 @@ void kill_creature(Creature* creature)
 
 void update_creature(Creature* creature)
 {
-	/* TODO: correct animation playback conditions */
+	/* TODO: Correct animation playback conditions */
+	/* TODO: Delta time usage */
 	if (!creature->dead && creature->ai_state == AISTATE_ROAM && creature->movement_capability != MOVCAP_NONE)
 	{
 		if (creature->roam_clock < 0)

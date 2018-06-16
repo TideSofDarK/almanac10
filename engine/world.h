@@ -37,4 +37,4 @@ void insert_object3d(World*, Object3D*);
 void insert_projectile(World*, Projectile*);
 Creature* spawn_creature(World*, const char *, vec3);
 
-void update_world(World*, float);
+void update_world(World*);

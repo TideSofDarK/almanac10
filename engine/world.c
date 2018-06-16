@@ -14,12 +14,13 @@
 #include "player.h"
 #include "game.h"
 #include "ui.h"
+#include "util.h"
 
 /* Macros to clean up creatures, projectiles and so on */
 /* TODO: possible refactoring of this */
 #define remove_entities(world, to_remove, things, func, all)        \
 do {                                                                \
-    if (all == 1)                                                   \
+    if (all == true)                                                \
     {                                                               \
         for (size_t i = 0; i < vector_size(world->things); ++i)     \
         {                                                           \
@@ -120,10 +121,12 @@ Creature* spawn_creature(World* world, const char * name, vec3 pos)
 	return creature;
 }
 
-void update_world(World* world, float delta_time)
+void update_world(World* world)
 {
 	if (world == NULL)
 		return;
+
+	float delta_time = get_delta_time();
 
 	/* Clean up things using macro */
 	remove_entities(world, projectiles_to_remove, projectiles, destruct_world_projectile, 0);
@@ -194,7 +197,7 @@ void update_world(World* world, float delta_time)
 					else
 					{
 						update_creature(creature);
-						script_update_creature(world->L, creature, delta_time);
+						script_update_creature(world->L, creature);
 					}
 				}
 			}
@@ -208,7 +211,7 @@ void update_world(World* world, float delta_time)
 
 		if (player == NULL || camera == NULL)
 			return;
-		update_player(player, delta_time);
+		update_player(player);
 
 		/* Projectile test */
 		if (get_control_state(CT_ATTACK) == BS_PRESSED)

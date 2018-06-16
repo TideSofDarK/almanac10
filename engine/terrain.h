@@ -7,9 +7,11 @@
 #include "texture.h"
 #include "shader.h"
 #include "mesh.h"
+#include "transform.h"
 
 typedef struct
 {
+    Transform transform;
     RenderData render_data;
     Vertex * vertices;
     int* indices;

@@ -32,6 +32,7 @@
 #define NK_GLFW_GL3_IMPLEMENTATION
 #include "nuklear.h"
 #include "nuklear_init.h"
+#include "object.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -114,9 +115,11 @@ int main(int argc, char *argv[])
 
 	Object3D * spider = NULL;
 	construct_object3d(&spider, model);
-    insert_object3d(world1, spider);
-
+	scale_by_float((Transform*)spider, 0.01f);
 	translate_pos_vec3((Transform*)spider, (vec3) { 0.0f, 0.5f, 0.0f });
+	translate_euler_axis((Transform*)spider, 1, 90.0f);
+
+    insert_object3d(world1, spider);
 
 	spawn_creature(world1, "minotaur", (vec3) { 1.0f, 0.0f, 0.0f });
     spawn_creature(world1, "minotaur_warrior", (vec3) { -1.0f, 0.0f, 0.0f });
@@ -125,25 +128,12 @@ int main(int argc, char *argv[])
     World* world = NULL;
 
 	/* Delta time calculations */
-	float last_frame	= 0.0f;
-	float fps_counter	= (float)glfwGetTime();
-	int frames			= 0;
 	char title_string[30];
 	while (!glfwWindowShouldClose(window))
 	{
-		float current_frame = (float)glfwGetTime();
-		float delta_time = current_frame - last_frame;
-		last_frame = current_frame;
-
-		if ((current_frame - fps_counter) > 1.0 || frames == 0)
-		{
-			float fps = (float)frames / (current_frame - fps_counter);
-			sprintf_s(title_string, 30, "Almanac 10 | FPS: %.1f", fps);
-			glfwSetWindowTitle(window, title_string);
-			fps_counter = current_frame;
-			frames = 0;
-		}
-		frames++;
+		update_fps((float)glfwGetTime());
+		sprintf_s(title_string, 30, "Almanac 10 | FPS: %.1f", get_fps());
+		glfwSetWindowTitle(window, title_string);
 
 		glfwPollEvents();
         update_input();
@@ -159,11 +149,11 @@ int main(int argc, char *argv[])
 
 		if (get_game_state() == GS_EDITOR)
         {
-            update_editor(delta_time);
+            update_editor();
         }
 
 		/* Process input and update world */
-		update_world(world, delta_time);
+		update_world(world);
 		
 		/* Terrain, Props, Sprites,.. */
 		draw_world(world);
@@ -183,10 +173,11 @@ int main(int argc, char *argv[])
 		glfwSwapBuffers(window);
 	}
 
-	nk_glfw3_shutdown();
+	shutdown_nuklear();
 
 	shutdown_renderers();
 	shutdown_game();
+	shutdown_editor();
 	destruct_grid();
 
 	glfwTerminate();

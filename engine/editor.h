@@ -11,8 +11,25 @@
 
 #include "camera.h"
 
+typedef enum
+{
+    EM_TERRAIN,
+    EM_PROPS,
+    EM_CREATURES
+} EditorMode;
+
+typedef struct
+{
+    vec3 * value;
+    float scale;
+} Gizmo;
+
+void shutdown_editor();
+
 void editor_ui(struct nk_context *);
-void update_editor(float);
+void update_editor();
 void toggle_editor();
 
-void editor_navigation(Camera *, float);
+void editor_navigation(Camera *);
+
+Gizmo * get_gizmos();

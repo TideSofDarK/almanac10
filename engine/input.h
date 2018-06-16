@@ -58,6 +58,8 @@ ButtonState get_control_state(ControlType btn);
 bool is_press_or_pressed(ControlType btn);
 bool is_pressed(ControlType btn);
 
+bool is_cursor_inside_window();
+
 void set_cursor_hidden(bool);
 void cursor_position(float*, float*);
 

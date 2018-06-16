@@ -2,6 +2,7 @@
 
 #include "game.h"
 #include "input.h"
+#include "util.h"
 
 #include <malloc.h>
 
@@ -22,7 +23,7 @@ void destruct_player(Player ** _player)
     *_player = NULL;
 }
 
-void update_player(Player *player, float delta_time)
+void update_player(Player *player)
 {
     Camera * camera = NULL;
     active_camera(&camera);
@@ -31,22 +32,16 @@ void update_player(Player *player, float delta_time)
 
     GameState game_state = get_game_state();
 
-    switch (game_state)
+    if (game_state == GS_WORLD)
     {
-        case GS_MENU:break;
-        case GS_CREATION:break;
-        case GS_WORLD:
-            ground_navigation(camera, delta_time);
-            break;
-        case GS_HOUSE:break;
-        case GS_INVENTORY:break;
-        case GS_PAUSED:break;
-        case GS_EDITOR:break;
+        ground_navigation(camera);
     }
 }
 
-void ground_navigation(Camera * camera, float delta_time)
+void ground_navigation(Camera * camera)
 {
+    float delta_time = get_delta_time();
+
     float rotatation_speed = 96.0f * delta_time;
     float speed = 5.0f * delta_time;
 
@@ -120,7 +115,7 @@ void ground_navigation(Camera * camera, float delta_time)
     glm_lookat(camera->transform.pos, camera_center, (float*)get_default_up(), camera->view);
 }
 
-void fly_navigation(Camera * camera, float delta_time)
+void fly_navigation(Camera * camera)
 {
 
 }

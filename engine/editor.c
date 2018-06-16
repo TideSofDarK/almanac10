@@ -8,8 +8,37 @@
 #include "world.h"
 #include "mesh.h"
 
+static EditorMode editor_mode = EM_TERRAIN;
+
+static Gizmo * gizmos = NULL;
+
 static World * world = NULL;
 static World * previous_world = NULL;
+
+void shutdown_editor()
+{
+    if (gizmos != NULL)
+        vector_free(gizmos);
+
+    world = NULL;
+    previous_world = NULL;
+}
+
+static inline void rebuild_terrain_gizmos(Terrain * terrain)
+{
+    if (gizmos != NULL)
+        vector_free(gizmos);
+
+    for (size_t i = 0; i < vector_size(terrain->vertices); ++i)
+    {
+        Gizmo gizmo;
+
+        gizmo.value = &terrain->vertices[i].pos;
+        gizmo.scale = (float)terrain->grid_size;
+
+        vector_push_back(gizmos, gizmo);
+    }
+}
 
 static inline void editor_toolbar(struct nk_context * ctx)
 {
@@ -51,21 +80,21 @@ void editor_ui(struct nk_context *ctx)
     editor_toolbar(ctx);
 }
 
-void update_editor(float delta_time)
+void update_editor()
 {
     Camera * camera = NULL;
     active_camera(&camera);
     if (camera == NULL)
         return;
 
-    bool pressed = is_press_or_pressed(CT_LMB);
-    if (pressed)
-    {
-        world->terrain->vertices[rand() % vector_size(world->terrain->vertices)].pos[1] = ((float)rand() / (float)(RAND_MAX / (0.25f))) - 0.0125f;
-        rebuild_terrain(world->terrain);
-    }
+//    bool pressed = is_press_or_pressed(CT_LMB);
+//    if (pressed)
+//    {
+//        world->terrain->vertices[rand() % vector_size(world->terrain->vertices)].pos[1] = ((float)rand() / (float)(RAND_MAX / (0.25f))) - 0.0125f;
+//        rebuild_terrain(world->terrain);
+//    }
 
-    editor_navigation(camera, delta_time);
+    editor_navigation(camera);
 }
 
 void toggle_editor()
@@ -85,6 +114,11 @@ void toggle_editor()
         {
             make_world_active(&world);
         }
+
+        if (editor_mode == EM_TERRAIN)
+        {
+            rebuild_terrain_gizmos(world->terrain);
+        }
     }
     else
     {
@@ -94,8 +128,10 @@ void toggle_editor()
     set_game_state(get_game_state() == GS_WORLD ? GS_EDITOR : GS_WORLD);
 }
 
-void editor_navigation(Camera * camera, float delta_time)
+void editor_navigation(Camera * camera)
 {
+    float delta_time = get_delta_time();
+
     static float px, py;
 
     float rotatation_speed = 96.0f * delta_time;
@@ -179,4 +215,9 @@ void editor_navigation(Camera * camera, float delta_time)
     vec3 camera_center;
     glm_vec_add(camera->transform.pos, front, camera_center);
     glm_lookat(camera->transform.pos, camera_center, (float*)get_default_up(), camera->view);
+}
+
+Gizmo * get_gizmos()
+{
+    return gizmos;
 }

@@ -8,7 +8,8 @@
 ButtonState input[GLFW_KEY_LAST];
 unsigned int input_map[CT_LAST];
 
-double cursorX, cursorY = 0.0;
+int cx, cy = 0.0;
+bool cursor_inside_window = false;
 
 void init_input()
 {
@@ -39,8 +40,9 @@ void init_input()
 
 void update_input()
 {
-	GLFWwindow * window;
+	GLFWwindow * window = NULL;
 	active_window(&window);
+	assert(window != NULL);
 
 	for (int i = 0; i < (int)CT_LAST; i++)
 	{
@@ -74,7 +76,12 @@ void update_input()
 		}
 	}
 
-	glfwGetCursorPos(window, &cursorX, &cursorY);
+	double dcx, dcy;
+	glfwGetCursorPos(window, &dcx, &dcy);
+	cx = (int)dcx;
+	cy = (int)dcy;
+
+	cursor_inside_window = (get_config().w > cx > 0) && (get_config().h > cy > 0);
 }
 
 ButtonState get_button_state(int btn)
@@ -97,6 +104,11 @@ bool is_pressed(ControlType btn)
 	return get_control_state(btn) == BS_PRESSED;
 }
 
+bool is_cursor_inside_window()
+{
+	return cursor_inside_window;
+}
+
 void set_cursor_hidden(bool hidden)
 {
 	GLFWwindow * window;
@@ -107,8 +119,8 @@ void set_cursor_hidden(bool hidden)
 
 void cursor_position(float* _cursorX, float* _cursorY)
 {
-	*_cursorX = (float)cursorX;
-	*_cursorY = (float)cursorY;
+	*_cursorX = (float)cx;
+	*_cursorY = (float)cy;
 }
 
 void cursor_raycast(Camera * camera, vec3 direction)

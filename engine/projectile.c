@@ -52,6 +52,7 @@ void kill_projectile(Projectile* projectile)
 
 void update_projectile(Projectile* projectile)
 {
+	/* TODO: Delta time usage */
 	if (projectile->begin) /* Maybe it needs a better check? */
 	{
 		float projectile_time = (float)(clock() - projectile->begin) / CLOCKS_PER_SEC;

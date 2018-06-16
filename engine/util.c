@@ -6,6 +6,8 @@
 #include <string.h>
 #include <malloc.h>
 
+static FPS fps;
+
 /*
  * copyright (c) 2014 joseph werle <joseph.werle@gmail.com>
  */
@@ -72,4 +74,29 @@ char* vec3_to_string(vec3 v)
 	asprintf (&buffer, "%f %f %f", v[0], v[1], v[2]);
 
 	return buffer;
+}
+
+void update_fps(float time)
+{
+	float current_frame = time;
+	fps.delta_time = current_frame - fps.last_frame;
+	fps.last_frame = current_frame;
+
+	if ((current_frame - fps.fps_counter) > 1.0 || fps.frames == 0)
+	{
+		fps.fps = (float)fps.frames / (current_frame - fps.fps_counter);
+		fps.fps_counter = current_frame;
+		fps.frames = 0;
+	}
+	fps.frames++;
+}
+
+float get_fps()
+{
+	return fps.fps;
+}
+
+float get_delta_time()
+{
+	return fps.delta_time;
 }

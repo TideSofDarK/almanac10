@@ -360,10 +360,10 @@ void script_kill_creature(lua_State * L, Creature * creature)
     lua_settop(L, 0);
 }
 
-void script_update_creature(lua_State * L, Creature* creature, float delta_time)
+void script_update_creature(lua_State * L, Creature* creature)
 {
     push_creature(L, creature->index);
-    call_method_1f(L, "update", delta_time);
+    call_method_1f(L, "update", get_delta_time());
 
     lua_settop(L, 0);
 }

@@ -8,6 +8,9 @@ void construct_terrain(Terrain ** _terrain, int grid_size)
     *_terrain = malloc(sizeof(Terrain));
     Terrain * terrain = *_terrain;
 
+    init_transform(&terrain->transform);
+    scale_by_float(&terrain->transform, (float)grid_size);
+
     terrain->grid_size = grid_size;
     terrain->vertices = NULL;
     terrain->indices = NULL;

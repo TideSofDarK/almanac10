@@ -11,7 +11,7 @@ typedef struct
 void construct_player(Player**);
 void destruct_player(Player**);
 
-void update_player(Player *, float delta_time);
+void update_player(Player *);
 
-void ground_navigation(Camera *, float);
-void fly_navigation(Camera *, float);
+void ground_navigation(Camera *);
+void fly_navigation(Camera *);

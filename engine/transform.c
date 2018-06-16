@@ -16,9 +16,26 @@ void euler_to_front(vec3 euler, vec3 dest)
 	glm_normalize(dest);
 }
 
+void transform_to_mat4(Transform transform, mat4 dest)
+{
+	glm_mat4_identity(dest);
+
+	mat4 rot;
+	glm_euler((vec3){glm_rad(transform.euler[0]), glm_rad(transform.euler[1]), glm_rad(transform.euler[2])}, rot);
+
+	glm_mul_rot(dest, rot, dest);
+	glm_translate(dest, transform.pos);
+	glm_scale(dest, transform.scale);
+}
+
 float transform_distance(Transform t1, Transform t2)
 {
 	return glm_vec_distance(t1.pos, t2.pos);
+}
+
+void scale_by_float(Transform * transform, float scale)
+{
+	glm_vec_copy((vec3) { scale, scale, scale }, transform->scale);
 }
 
 void translate_pos_vec3(Transform* transform, vec3 offset)
