@@ -56,7 +56,7 @@ void set_window_icon(GLFWwindow *window) {
         image->width = width;
         image->pixels = data;
 
-        //glfwSetWindowIcon(window, 1, image);
+        glfwSetWindowIcon(window, 1, image);
     }
 }
 
