@@ -45,6 +45,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     resize_render_textures(width, height);
 }
 
+#ifndef __linux__
 void set_window_icon(GLFWwindow *window) {
     int width, height, nr_channels;
     unsigned char *data = stbi_load("assets/icon.png", &width, &height, &nr_channels, STBI_rgb_alpha);
@@ -59,6 +60,7 @@ void set_window_icon(GLFWwindow *window) {
         glfwSetWindowIcon(window, 1, image);
     }
 }
+#endif
 
 int main(int argc, char *argv[]) {
     /* Random seed */
