@@ -23,7 +23,6 @@
 
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
-#define NK_INCLUDE_STANDARD_VARARGS
 #define NK_INCLUDE_DEFAULT_ALLOCATOR
 #define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
 #define NK_INCLUDE_FONT_BAKING
@@ -57,7 +56,7 @@ void set_window_icon(GLFWwindow *window) {
         image->width = width;
         image->pixels = data;
 
-        glfwSetWindowIcon(window, 1, image);
+        //glfwSetWindowIcon(window, 1, image);
     }
 }
 
@@ -70,12 +69,10 @@ int main(int argc, char *argv[]) {
 
     /* Create window */
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#if __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
 
     GLFWwindow *window = glfwCreateWindow(get_config().w, get_config().h, "", NULL, NULL);
     if (window == NULL) {
@@ -86,7 +83,9 @@ int main(int argc, char *argv[]) {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSwapInterval(1);
+#ifndef __linux__
     set_window_icon(window);
+#endif
 
     /* Check if GL functions are loaded */
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
@@ -135,10 +134,10 @@ int main(int argc, char *argv[]) {
     spawn_creature(world, "black_dragon", (vec3) {0.0f, 0.0f, 0.0f});
 
     /* Delta time calculations */
-    char title_string[30];
+    char *title_string;
     while (!glfwWindowShouldClose(window)) {
         update_fps((float) glfwGetTime());
-        sprintf_s(title_string, 30, "Almanac 10 | FPS: %.1f", get_fps());
+        asprintf(&title_string, "Almanac 10 | FPS: %.1f", get_fps());
         glfwSetWindowTitle(window, title_string);
 
         glfwPollEvents();
@@ -160,8 +159,6 @@ int main(int argc, char *argv[]) {
             update_editor();
         }
         update_world(world);
-
-        transform_rotate_axis(&spider->transform, 1, get_delta_time() * 25.0f);
 
         draw_world(world);
 

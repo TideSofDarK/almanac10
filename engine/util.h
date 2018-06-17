@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cglm\cglm.h>
+#include <cglm/cglm.h>
 
 typedef struct {
     float delta_time;

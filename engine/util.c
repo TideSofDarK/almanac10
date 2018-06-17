@@ -37,8 +37,7 @@ int vasprintf(char **str, const char *fmt, va_list args) {
 }
 
 char *load_string_from_file(const char *filename) {
-    FILE *f;
-    fopen_s(&f, filename, "rb");
+    FILE *f = fopen(filename, "rb");
     char *buf = NULL;
     if (!f) {
         fprintf(stderr, "Could not open text file: %s\n", filename);
