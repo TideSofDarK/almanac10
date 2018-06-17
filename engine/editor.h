@@ -18,10 +18,17 @@ typedef enum {
     EM_CREATURES
 } EditorMode;
 
-typedef struct {
+typedef enum {
+    GT_SPHERE,
+    GT_ARROW
+} GizmoType;
+
+typedef struct Gizmo {
     Transform transform;
     vec3 *value;
     vec4 color;
+    GizmoType type;
+    struct Gizmo *children;
 } Gizmo;
 
 void shutdown_editor();

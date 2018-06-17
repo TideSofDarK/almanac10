@@ -23,3 +23,5 @@ void update_fps(float);
 float get_fps();
 
 float get_delta_time();
+
+float intersect_ray_sphere(vec3, vec3, vec3, float);

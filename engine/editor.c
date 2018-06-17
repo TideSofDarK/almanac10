@@ -9,8 +9,16 @@
 #include "mesh.h"
 #include "camera.h"
 
+#define GIZMO_RAY 8.0f
+#define GIZMO_RADIUS 0.1f
+
 #define GIZMO_RED (vec4){1.0f,0.0f,0.0f,1.0f}
 #define GIZMO_GREEN (vec4){0.0f,1.0f,0.0f,1.0f}
+#define GIZMO_BLUE (vec4){0.0f,1.0f,0.0f,1.0f}
+
+#define GIZMO_AXIS_COLOR(a) (vec4){(a) == 0 ? 1.0f : 0.0f, (a) == 1 ? 1.0f : 0.0f, (a) == 2 ? 1.0f : 0.0f, 1.0f}
+
+#define GIZMO_WHITE (vec4){1.0f,1.0f,1.0f,1.0f}
 
 static EditorMode editor_mode = EM_TERRAIN;
 
@@ -20,34 +28,59 @@ static Gizmo *selected_gizmo = NULL;
 static World *world = NULL;
 static World *previous_world = NULL;
 
-void shutdown_editor() {
-    if (gizmos != NULL)
-        vector_free(gizmos);
+static inline void clear_gizmos(Gizmo ** _gizmos) {
+    if (*_gizmos != NULL) {
+        for (size_t i = 0; i < vector_size(*_gizmos); ++i) {
+            if ((*_gizmos)[i].children != NULL)
+            {
+                clear_gizmos(&(*_gizmos)[i].children);
+            }
+        }
 
-    world = NULL;
-    previous_world = NULL;
+        vector_free(*_gizmos);
+        *_gizmos = NULL;
+    }
 }
 
 static inline void select_gizmo(int index) {
     if (selected_gizmo != NULL) {
         glm_vec4_copy(GIZMO_RED, selected_gizmo->color);
+        clear_gizmos(&selected_gizmo->children);
     }
 
     selected_gizmo = &gizmos[index];
 
-    glm_vec4_copy(GIZMO_GREEN, selected_gizmo->color);
-}
+    glm_vec4_copy(GIZMO_WHITE, selected_gizmo->color);
 
-static inline void clear_gizmos() {
-    if (gizmos != NULL) {
-        vector_free(gizmos);
-        gizmos = NULL;
-        selected_gizmo = NULL;
+    selected_gizmo->children = NULL;
+    for (int i = 0; i < 3; ++i) {
+        Gizmo axis = {};
+
+        axis.children = NULL;
+
+        axis.type = GT_ARROW;
+
+        glm_vec4_copy(GIZMO_AXIS_COLOR(i), axis.color);
+
+        init_transform(&axis.transform);
+        transform_rotate_axis(&axis.transform, i, 90.0f);
+        glm_vec_copy(selected_gizmo->transform.pos, axis.transform.pos);
+
+        vector_push_back(selected_gizmo->children, axis);
     }
 }
 
+void shutdown_editor() {
+    clear_gizmos(&gizmos);
+    selected_gizmo = NULL;
+
+    world = NULL;
+    previous_world = NULL;
+}
+
 static inline void rebuild_terrain_gizmos(Terrain *terrain) {
-    clear_gizmos();
+    clear_gizmos(&gizmos);
+    selected_gizmo = NULL;
 
     float scale = (float) terrain->grid_size;
 
@@ -55,6 +88,8 @@ static inline void rebuild_terrain_gizmos(Terrain *terrain) {
         Gizmo gizmo;
 
         gizmo.value = &terrain->vertices[i].pos;
+        gizmo.type = GT_SPHERE;
+        gizmo.children = NULL;
 
         glm_vec4_copy(GIZMO_RED, gizmo.color);
 
@@ -108,50 +143,20 @@ void update_editor() {
 
     /* Gizmos hit test */
     if (get_control_state(CT_LMB) == BS_PRESSED) {
-        vec3 origin, direction;
+        vec3 origin = {}, direction = {}, target = {};
         cursor_raycast(camera, origin, direction);
-
-        vec3 line;
-        glm_vec_copy(direction, line);
-
-        line[0] *= 8.0f;
-        line[1] *= 8.0f;
-        line[2] *= 8.0f;
-
-        glm_vec_add(origin, line, line);
+        glm_vec_copy(origin, target);
+        glm_vec_muladds(direction, GIZMO_RAY, target);
 
         for (size_t i = 0; i < vector_size(gizmos); i++) {
-            vec3 p1;
-            glm_vec_copy(origin, p1);
-            vec3 p2;
-            glm_vec_copy(line, p2);
-            vec3 p3;
-            glm_vec_copy(gizmos[i].transform.pos, p3);
-            float r = 0.1f;
-
-            float x1 = p1[0];
-            float y1 = p1[1];
-            float z1 = p1[2];
-            float x2 = p2[0];
-            float y2 = p2[1];
-            float z2 = p2[2];
-            float x3 = p3[0];
-            float y3 = p3[1];
-            float z3 = p3[2];
-
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-            float dz = z2 - z1;
-
-            float a = dx * dx + dy * dy + dz * dz;
-            float b = 2.0f * (dx * (x1 - x3) + dy * (y1 - y3) + dz * (z1 - z3));
-            float c = x3 * x3 + y3 * y3 + z3 * z3 + x1 * x1 + y1 * y1 + z1 * z1 - 2.0f * (x3 * x1 + y3 * y1 + z3 * z1) -
-                      r * r;
-
-            float test = b * b - 4.0f * a * c;
-
-            if (test >= 0.0f) {
-                select_gizmo((int) i);
+            switch (gizmos[i].type) {
+                case GT_SPHERE:
+                    if (intersect_ray_sphere(origin, target, gizmos[i].transform.pos, GIZMO_RADIUS) >= 0.0f) {
+                        select_gizmo((int) i);
+                    }
+                    break;
+                case GT_ARROW:
+                    break;
             }
         }
     }

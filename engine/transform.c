@@ -20,9 +20,9 @@ void transform_to_mat4(Transform transform, mat4 dest) {
     mat4 rot;
     glm_euler((vec3) {glm_rad(transform.euler[0]), glm_rad(transform.euler[1]), glm_rad(transform.euler[2])}, rot);
 
-    glm_mul_rot(dest, rot, dest);
     glm_translate(dest, transform.pos);
     glm_scale(dest, transform.scale);
+    glm_mul_rot(dest, rot, dest);
 }
 
 float transform_distance(Transform t1, Transform t2) {

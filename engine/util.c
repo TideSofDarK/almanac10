@@ -86,3 +86,28 @@ float get_fps() {
 float get_delta_time() {
     return fps.delta_time;
 }
+
+float intersect_ray_sphere(vec3 p1, vec3 p2, vec3 p3, float r) {
+    float x1 = p1[0];
+    float y1 = p1[1];
+    float z1 = p1[2];
+    float x2 = p2[0];
+    float y2 = p2[1];
+    float z2 = p2[2];
+    float x3 = p3[0];
+    float y3 = p3[1];
+    float z3 = p3[2];
+
+    float dx = x2 - x1;
+    float dy = y2 - y1;
+    float dz = z2 - z1;
+
+    float a = dx * dx + dy * dy + dz * dz;
+    float b = 2.0f * (dx * (x1 - x3) + dy * (y1 - y3) + dz * (z1 - z3));
+    float c = x3 * x3 + y3 * y3 + z3 * z3 + x1 * x1 + y1 * y1 + z1 * z1 - 2.0f * (x3 * x1 + y3 * y1 + z3 * z1) -
+              r * r;
+
+    float test = b * b - 4.0f * a * c;
+
+    return test;
+}

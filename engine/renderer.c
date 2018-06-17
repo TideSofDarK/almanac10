@@ -18,6 +18,7 @@ static SpriteRenderer sprite_renderer;
 static ModelRenderer model_renderer;
 
 static Model *primitive_sphere = NULL;
+static Model *primitive_arrow = NULL;
 
 RenderData create_quad_render_data(int buffer_size, const float *vertices) {
     RenderData render_data;
@@ -100,6 +101,7 @@ void init_renderers() {
     model_renderer.fb_render_data = create_frame_buffer_render_data(MODEL_RENDERER_SCALE);
 
     primitive_sphere = get_model("assets/models/tools/sphere/", "sphere");
+    primitive_arrow = get_model("assets/models/tools/arrow/", "arrow");
 
     /* TODO: Remove later */
     if (is_grid_constructed() == 0) {
@@ -255,6 +257,7 @@ static inline void draw_terrain(Terrain *terrain) {
     glBindVertexArray(0);
 }
 
+/* TODO: General primitive rendering refactoring */
 static inline void draw_sphere(Transform transform, float scale, vec4 color) {
     mat4 model;
     transform_to_mat4(transform, model);
@@ -264,6 +267,20 @@ static inline void draw_sphere(Transform transform, float scale, vec4 color) {
 
     glBindVertexArray(primitive_sphere->meshes[0]->render_data.VAO);
     glDrawElements(GL_TRIANGLES, (unsigned int) vector_size(primitive_sphere->meshes[0]->indices), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+
+    set_uniform_vec4(model_renderer.shader, "solid_color", 0.0f, 0.0f, 0.0f, 0.0f);
+}
+
+static inline void draw_arrow(Transform transform, float scale, vec4 color) {
+    mat4 model;
+    transform_to_mat4(transform, model);
+
+    set_uniform_vec4(model_renderer.shader, "solid_color", color[0], color[1], color[2], color[3]);
+    set_uniform_mat4(model_renderer.shader, "model", model);
+
+    glBindVertexArray(primitive_arrow->meshes[0]->render_data.VAO);
+    glDrawElements(GL_TRIANGLES, (unsigned int) vector_size(primitive_arrow->meshes[0]->indices), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
     set_uniform_vec4(model_renderer.shader, "solid_color", 0.0f, 0.0f, 0.0f, 0.0f);
@@ -346,7 +363,25 @@ void draw_world(World *world) {
     if (get_game_state() == GS_EDITOR) {
         Gizmo *gizmos = get_gizmos();
         for (size_t i = 0; i < vector_size(gizmos); i++) {
-            draw_sphere(gizmos[i].transform, 1.0f, gizmos[i].color);
+            switch (gizmos[i].type) {
+                case GT_SPHERE:
+                    draw_sphere(gizmos[i].transform, 1.0f, gizmos[i].color);
+                    break;
+                case GT_ARROW:
+                    draw_arrow(gizmos[i].transform, 1.0f, gizmos[i].color);
+                    break;
+            }
+
+            for (size_t c = 0; c < vector_size(gizmos[i].children); ++c) {
+                switch (gizmos[i].children[c].type) {
+                    case GT_SPHERE:
+                        draw_sphere(gizmos[i].children[c].transform, 1.0f, gizmos[i].children[c].color);
+                        break;
+                    case GT_ARROW:
+                        draw_arrow(gizmos[i].children[c].transform, 1.0f, gizmos[i].children[c].color);
+                        break;
+                }
+            }
         }
     }
 
