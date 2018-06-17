@@ -8,7 +8,7 @@
 #include "game.h"
 #include "transform.h"
 
-#define SCRIPTS_PATH ".\\assets\\scripts\\?.lua"
+#define SCRIPTS_PATH "./assets/scripts/?.lua"
 
 static inline void require_api(lua_State *);
 
@@ -61,7 +61,7 @@ static inline const char *get_field_string(lua_State *L, const char *key) {
     lua_pushstring(L, key);
     lua_gettable(L, -2);
     // if (!lua_isnumber(L, -1))
-    const char *result = _strdup(lua_tostring(L, -1));
+    const char *result = strdup(lua_tostring(L, -1));
     lua_pop(L, 1);
     return result;
 }

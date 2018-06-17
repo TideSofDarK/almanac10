@@ -6,7 +6,7 @@
 
 #include "util.h"
 
-#define PROPS_PATH ".\\assets\\models\\props\\%s\\"
+#define PROPS_PATH "./assets/models/props/%s/"
 
 /* TODO: Asset precache manager */
 static Model **precached_models = NULL;
