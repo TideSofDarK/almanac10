@@ -16,13 +16,15 @@ TYPEDEF(aiString)
 typedef enum aiTextureType aiTextureType;
 #undef TYPEDEF
 
-typedef struct
-{
-	Mesh** meshes;
-	const char * name;
+typedef struct {
+    Mesh **meshes;
+    const char *name;
 } Model;
 
-void construct_model(Model**, const char*, const char *);
-void destruct_model(Model**);
+int free_precached_models();
 
-void construct_prop(Model **, const char*);
+void free_precached_model(Model *);
+
+Model *get_model(const char *, const char *);
+
+Model *get_prop_model(const char *);

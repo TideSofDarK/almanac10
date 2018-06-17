@@ -9,16 +9,16 @@
 #include "mesh.h"
 #include "transform.h"
 
-typedef struct
-{
+typedef struct {
     Transform transform;
     RenderData render_data;
-    Vertex * vertices;
-    int* indices;
+    Vertex *vertices;
+    int *indices;
     int grid_size;
 } Terrain;
 
-void construct_terrain(Terrain**, int);
-void destruct_terrain(Terrain**);
+void construct_terrain(Terrain **, int);
 
-void rebuild_terrain(Terrain*);
+void destruct_terrain(Terrain **);
+
+void rebuild_terrain(Terrain *);

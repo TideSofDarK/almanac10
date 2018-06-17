@@ -7,8 +7,9 @@
 #define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
 #define NK_INCLUDE_FONT_BAKING
 #define NK_INCLUDE_DEFAULT_FONT
+
 #include "nuklear.h"
 
 #include "world.h"
 
-void debug_world(struct nk_context*);
+void debug_world(struct nk_context *);

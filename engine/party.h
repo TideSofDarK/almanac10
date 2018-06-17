@@ -2,8 +2,7 @@
 
 #include "transform.h"
 
-typedef enum
-{
+typedef enum {
     C_LIZARD,
     C_TROLL,
     C_ORC,
@@ -13,30 +12,26 @@ typedef enum
     C_FANATIC
 } Class;
 
-typedef enum
-{
+typedef enum {
     HS_NONE,
     HS_CURSED,
     HS_DEAD
 } Status;
 
-typedef struct
-{
+typedef struct {
     int health, max_health;
     int mana, max_mana;
     int attack_dice_count, attack_dice, attack_bonus;
     Status status;
 } Stats;
 
-typedef struct
-{
+typedef struct {
     Class class;
     Stats stats;
-    char * name;
+    char *name;
 } Hero;
 
-typedef struct
-{
+typedef struct {
     Hero heroes[4];
     Transform transform;
     /* TODO: Movement speed calculations? */

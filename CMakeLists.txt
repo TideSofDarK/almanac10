@@ -27,6 +27,6 @@ target_link_libraries(almanac10
         )
 
 # Copy Lua scripts to assets directory
-add_custom_command(TARGET almanac10 POST_BUILD
+add_custom_command(TARGET almanac10 PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/scripts/ $<TARGET_FILE_DIR:almanac10>/assets/scripts/)

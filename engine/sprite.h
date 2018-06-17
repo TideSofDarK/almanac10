@@ -23,51 +23,50 @@
 /* 5 possible directions of each sheet */
 #define MAXANIM (((ANIM_ID(ANIM_CUSTOM2) + 1) * 5) - 1)
 
-typedef enum
-{
-	ANIM_CAST1 = NOLOOP,
-	ANIM_CAST2,
-	ANIM_FLINCH,
-	ANIM_DEATH,
-	ANIM_CUSTOM1,
-	ANIM_NONE,
-	ANIM_IDLE,
-	ANIM_MOVE,
-	ANIM_ATTACK,
-	ANIM_CUSTOM2
+typedef enum {
+    ANIM_CAST1 = NOLOOP,
+    ANIM_CAST2,
+    ANIM_FLINCH,
+    ANIM_DEATH,
+    ANIM_CUSTOM1,
+    ANIM_NONE,
+    ANIM_IDLE,
+    ANIM_MOVE,
+    ANIM_ATTACK,
+    ANIM_CUSTOM2
 } AnimationState;
 
-typedef enum
-{
-	DIR_N,
-	DIR_NE,
-	DIR_E,
-	DIR_SE,
-	DIR_S,
-	DIR_SW,
-	DIR_W,
-	DIR_NW
+typedef enum {
+    DIR_N,
+    DIR_NE,
+    DIR_E,
+    DIR_SE,
+    DIR_S,
+    DIR_SW,
+    DIR_W,
+    DIR_NW
 } Direction;
 
 /* Any renderable 2D entity */
-typedef struct
-{
-	Texture* textures[MAXANIM];
-	unsigned int w, h, sheet_position;
-	AnimationState anim_state;
-	float anim_speed;
-	int animation_finished;
-	clock_t begin;
+typedef struct {
+    Texture *textures[MAXANIM];
+    unsigned int w, h, sheet_position;
+    AnimationState anim_state;
+    float anim_speed;
+    int animation_finished;
+    clock_t begin;
 } Sprite;
 
-void destruct_sprite(Sprite**);
+void destruct_sprite(Sprite **);
 
-void sprite_creature(Sprite**, const char*);
-void sprite_particle(Sprite**, const char*, int, int);
+void sprite_creature(Sprite **, const char *);
 
-void update_sprite(Sprite*);
+void sprite_particle(Sprite **, const char *, int, int);
 
-void play_sprite_animation(Sprite*, AnimationState);
+void update_sprite(Sprite *);
 
-int get_sheet_length(Sprite*);
-int determine_orientation(Transform, Camera*);
+void play_sprite_animation(Sprite *, AnimationState);
+
+int get_sheet_length(Sprite *);
+
+int determine_orientation(Transform, Camera *);

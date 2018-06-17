@@ -20,5 +20,5 @@ end
 
 function c_black_dragon:on_spawn()
 	print("Spawned black dragon with ID:", self:get_index())
-	print(self:get_health())
+	print("Mana is:", self:get_mana())
 end

@@ -1,13 +1,11 @@
 #include "party.h"
 
-Party create_random_party()
-{
+Party create_random_party() {
     Party party;
 
     init_transform(&party.transform);
 
-    for (int i = 0; i < 4; ++i)
-    {
+    for (int i = 0; i < 4; ++i) {
         party.heroes[i].name = "Alexis";
         party.heroes[i].class = C_ACOLYTE;
         party.heroes[i].stats.health = party.heroes[i].stats.max_health = 200;

@@ -21,37 +21,35 @@
 
 #define BTN_DEFAULT_EXIT GLFW_KEY_ESCAPE
 
-typedef enum
-{
-	CT_LMB,
-	CT_RMB,
+typedef enum {
+    CT_LMB,
+    CT_RMB,
 
-	CT_FORWARD,
-	CT_BACK,
-	CT_LEFT,
-	CT_RIGHT,
+    CT_FORWARD,
+    CT_BACK,
+    CT_LEFT,
+    CT_RIGHT,
 
-	CT_STRAFE,
+    CT_STRAFE,
 
-	CT_CAMERA_UP,
-	CT_CAMERA_DOWN,
-	CT_CAMERA_HOME,
+    CT_CAMERA_UP,
+    CT_CAMERA_DOWN,
+    CT_CAMERA_HOME,
 
-	CT_ATTACK,
+    CT_ATTACK,
 
-	CT_EDITOR,
+    CT_EDITOR,
 
-	CT_EXIT,
+    CT_EXIT,
 
-	CT_LAST
+    CT_LAST
 } ControlType;
 
-typedef enum
-{
-	BS_NONE,
-	BS_PRESS,
-	BS_PRESSED,
-	BS_RELEASED
+typedef enum {
+    BS_NONE,
+    BS_PRESS,
+    BS_PRESSED,
+    BS_RELEASED
 } ButtonState;
 
 void init_input();
@@ -59,12 +57,15 @@ void init_input();
 void update_input();
 
 ButtonState get_control_state(ControlType btn);
+
 bool is_press_or_pressed(ControlType btn);
+
 bool is_pressed(ControlType btn);
 
 bool is_cursor_inside_window();
 
 void set_cursor_hidden(bool);
-void cursor_position(float*, float*);
 
-void cursor_raycast(Camera*, vec3, vec3);
+void cursor_position(float *, float *);
+
+void cursor_raycast(Camera *, vec3, vec3);
