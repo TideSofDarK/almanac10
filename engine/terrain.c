@@ -9,7 +9,7 @@ void construct_terrain(Terrain ** _terrain, int grid_size)
     Terrain * terrain = *_terrain;
 
     init_transform(&terrain->transform);
-    scale_by_float(&terrain->transform, (float)grid_size);
+    transform_scale(&terrain->transform, (float) grid_size);
 
     terrain->grid_size = grid_size;
     terrain->vertices = NULL;

@@ -6,11 +6,8 @@
 
 void debug_world(struct nk_context *ctx)
 {
-	World* world = NULL;
-	active_world(&world);
-	Camera* camera = NULL;
-	active_camera(&camera);
-
+	World * world = get_active_world();
+	Camera * camera = get_active_camera();
 	if (world == NULL || camera == NULL)
 		return;
 
@@ -38,8 +35,6 @@ void debug_world(struct nk_context *ctx)
 			nk_label(ctx, b, NK_TEXT_LEFT);
 			free(b);
 
-			b = NULL;
-
 			nk_group_end(ctx);
 		}
 
@@ -53,7 +48,7 @@ void debug_world(struct nk_context *ctx)
 			{
 				if (worlds[i] != NULL)
 				{
-					char  buf[BUFSIZ];
+					char buf[BUFSIZ];
 					snprintf(buf, sizeof(buf), "%d", i);
 
 					nk_layout_row_begin(ctx, NK_DYNAMIC, font_size, 4);
@@ -64,7 +59,7 @@ void debug_world(struct nk_context *ctx)
 					nk_layout_row_push(ctx, 0.25f);
 					if (nk_button_label(ctx, worlds[i] == world ? "active" : "switch"))
 					{
-						make_world_active(&worlds[i]);
+						make_world_active(worlds[i]);
 					}
 					//nk_layout_row_push(ctx, 0.3f);
 					//if (nk_button_label(ctx, "destroy"))

@@ -9,7 +9,7 @@
 ButtonState input[GLFW_KEY_LAST];
 unsigned int input_map[CT_LAST];
 
-int cx, cy = 0.0;
+int cx = 0, cy = 0;
 bool cursor_inside_window = false;
 
 void init_input()
@@ -37,12 +37,13 @@ void init_input()
 	input_map[CT_ATTACK] = BTN_DEFAULT_ATTACK;
 
 	input_map[CT_EDITOR] = BTN_DEFAULT_EDITOR;
+
+	input_map[CT_EXIT] = BTN_DEFAULT_EXIT;
 }
 
 void update_input()
 {
-	GLFWwindow * window = NULL;
-	active_window(&window);
+	GLFWwindow * window = get_active_window();
 	assert(window != NULL);
 
 	for (int i = 0; i < (int)CT_LAST; i++)
@@ -112,10 +113,7 @@ bool is_cursor_inside_window()
 
 void set_cursor_hidden(bool hidden)
 {
-	GLFWwindow * window;
-	active_window(&window);
-
-	glfwSetInputMode(window, GLFW_CURSOR, hidden ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
+	glfwSetInputMode(get_active_window(), GLFW_CURSOR, hidden ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 }
 
 void cursor_position(float* _cx, float* _cy)
@@ -137,14 +135,14 @@ void cursor_raycast(Camera * camera, vec3 origin, vec3 direction)
 	glm_mat4_inv(world_to_camera, world_to_camera);
 
 	vec4 ray_start_ndc = {
-			(fcx/w - 0.5f) * 2.0f,
-			(fcy/h - 0.5f) * -2.0f,
+			(fcx / w - 0.5f) * 2.0f,
+			(fcy / h - 0.5f) * -2.0f,
 			-1.0f,
 			1.0f
 	};
 	vec4 ray_end_ndc = {
-			((float)fcx/(float)w - 0.5f) * 2.0f,
-			((float)fcy/(float)h - 0.5f) * -2.0f,
+			(fcx / w - 0.5f) * 2.0f,
+			(fcy / h - 0.5f) * -2.0f,
 			0.0,
 			1.0f
 	};
@@ -161,7 +159,6 @@ void cursor_raycast(Camera * camera, vec3 origin, vec3 direction)
 	glm_vec4_sub(ray_end_world, ray_start_world, d);
 	glm_vec3(d, direction);
 	glm_normalize(direction);
-
 
 	glm_vec3(ray_start_world, origin);
 }

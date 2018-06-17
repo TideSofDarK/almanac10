@@ -263,17 +263,13 @@ static int api_get_creature(lua_State * L)
 
 static int api_spawn_creature(lua_State * L)
 {
-    World* world = NULL;
-    active_world(&world);
-    assert(world != NULL);
-
     const char * creature_name = luaL_checkstring(L, 1);
     vec3 pos;
 
     lua_settop(L, 2);
     get_vector(L, pos);
 
-    Creature* creature = spawn_creature(world, creature_name, pos);
+    Creature* creature = spawn_creature(get_active_world(), creature_name, pos);
 
     push_creature(L, creature->index);
 

@@ -1,7 +1,5 @@
 #include "world.h"
 
-#include <GLFW/glfw3.h>
-
 #include "vertices.h"
 #include "grid.h"
 #include "model.h"
@@ -16,8 +14,8 @@
 #include "ui.h"
 #include "util.h"
 
-/* Macros to clean up creatures, projectiles and so on */
-/* TODO: possible refactoring of this */
+/* Macros to clean up a vector using custom deconstruct function */
+/* TODO: Possible refactoring */
 #define remove_entities(world, to_remove, things, func, all)        \
 do {                                                                \
     if (all == true)                                                \
@@ -42,26 +40,26 @@ do {                                                                \
     world->to_remove = NULL;                                        \
 } while(0);
 
-static inline void destruct_world_projectile(Projectile** _projectile, World * world)
+static inline void destruct_world_projectile(Projectile ** _projectile, World * world)
 {
 	destruct_projectile(_projectile);
 }
 
-static inline void destruct_world_creature(Creature** _creature, World * world)
+static inline void destruct_world_creature(Creature ** _creature, World * world)
 {
-	script_destroy_creature(world->L, *_creature);
+	script_destroy_creature(world->L, * _creature);
 	destruct_creature(_creature);
 }
 
-static inline void destruct_world_object3d(Object3D** _object3d, World * world)
+static inline void destruct_world_object3d(Object3D ** _object3d, World * world)
 {
 	destruct_object3d(_object3d);
 }
 
 void construct_world(World ** _world, const char * name)
 {
-	*_world = malloc(sizeof(World));
-	World *world = *_world;
+	* _world = malloc(sizeof(World));
+	World * world = * _world;
 
 	world->creatures = NULL;
 	world->creatures_to_remove = NULL;
@@ -81,7 +79,7 @@ void construct_world(World ** _world, const char * name)
 
 void destruct_world(World ** _world)
 {
-	World *world = *_world;
+	World * world = * _world;
 
 	remove_entities(world, projectiles_to_remove, projectiles, destruct_world_projectile, 1);
 	remove_entities(world, creatures_to_remove, creatures, destruct_world_creature, 1);
@@ -110,9 +108,9 @@ void insert_projectile(World* world, Projectile* projectile)
 }
 
 /* TODO: maybe we should move this code somewhere else and leave only insert_creature thingy */
-Creature* spawn_creature(World* world, const char * name, vec3 pos)
+Creature * spawn_creature(World * world, const char * name, vec3 pos)
 {
-	Creature* creature = NULL;
+	Creature * creature = NULL;
 	construct_creature(&creature, get_precached_creature_data(name), pos);
     creature->index = script_spawn_creature(world->L, creature);
 
@@ -121,17 +119,14 @@ Creature* spawn_creature(World* world, const char * name, vec3 pos)
 	return creature;
 }
 
-void update_world(World* world)
+void update_world(World * world)
 {
-	if (world == NULL)
-		return;
-
-	float delta_time = get_delta_time();
-
 	/* Clean up things using macro */
 	remove_entities(world, projectiles_to_remove, projectiles, destruct_world_projectile, 0);
 	remove_entities(world, creatures_to_remove, creatures, destruct_world_creature, 0);
 	remove_entities(world, objects3d_to_remove, objects3d, destruct_world_object3d, 0);
+
+	update_camera(get_active_camera());
 
 	if (get_game_state() != GS_EDITOR)
 	{
@@ -164,8 +159,8 @@ void update_world(World* world)
 							continue;
 						}
 
-						for (size_t i = 0; i < vector_size(world->creatures); ++i) {
-							Creature* creature = world->creatures[i];
+						for (size_t c = 0; c < vector_size(world->creatures); ++c) {
+							Creature * creature = world->creatures[c];
 							if (creature != NULL)
 							{
 								if (!creature->dead && transform_distance(projectile->transform, creature->transform) <= projectile->radius)
@@ -204,13 +199,10 @@ void update_world(World* world)
 		}
 
 		/* Player controls */
-		Player * player = NULL;
-		active_player(&player);
-		Camera* camera = NULL;
-		active_camera(&camera);
+		Player * player = get_active_player();
+		Camera* camera = get_active_camera();
+		assert(player != NULL && camera != NULL);
 
-		if (player == NULL || camera == NULL)
-			return;
 		update_player(player);
 
 		/* Projectile test */

@@ -49,11 +49,9 @@ const float* get_sprite_vertices_and_tex_coords(int* buffer_size, SpriteOriginMo
 	case OM_BOTTOM:
 		*buffer_size = sizeof(sprite_bottom_vertices_and_tex_coords);
 		return sprite_bottom_vertices_and_tex_coords;
-		break;
 	default:
 		*buffer_size = sizeof(sprite_center_vertices_and_tex_coords);
 		return sprite_center_vertices_and_tex_coords;
-		break;
 	}
 }
 

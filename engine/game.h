@@ -38,17 +38,17 @@ typedef struct
 	World ** worlds;
 } Game;
 
-void init_game(GLFWwindow *, World**);
+void init_game(GLFWwindow *);
 void shutdown_game();
 
 GameState get_game_state();
 void set_game_state(GameState);
 
-void insert_world(World**, bool);
-void make_world_active(World**);
-World** get_all_worlds();
+void insert_world(World *, bool);
+void make_world_active(World *);
+World ** get_all_worlds();
 
-void active_window(GLFWwindow **);
-void active_world(World**);
-void active_player(Player**);
-void active_camera(Camera**);
+GLFWwindow * get_active_window();
+World * get_active_world();
+Player * get_active_player();
+Camera * get_active_camera();

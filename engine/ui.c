@@ -38,11 +38,7 @@ void tooltip_position(int *start_x, int *start_y, int w, int h, int cx, int cy)
 
 void cursor_target_extended_info(struct nk_context* ctx, int cx, int cy, int creature_under_cursor)
 {
-	World* world;
-	active_world(&world);
-
-	if (!world)
-		return;
+	World* world = get_active_world();
 
 	int w = 150;
 	int h = 250;
@@ -61,10 +57,9 @@ void cursor_target_extended_info(struct nk_context* ctx, int cx, int cy, int cre
 
 void cursor_target_info(struct nk_context* ctx, int creature_under_cursor)
 {
-	World* world;
-	active_world(&world);
+	World* world = get_active_world();
 
-	if (!world || world->creatures == NULL)
+	if (world->creatures == NULL)
 		return;
 
 	Config config = get_config();
@@ -94,10 +89,7 @@ void cursor_target_info(struct nk_context* ctx, int creature_under_cursor)
 
 void ui(struct nk_context* ctx)
 {
-	World* world = NULL;
-	active_world(&world);
-	if (world == NULL)
-		return;
+	World * world = get_active_world();
 
 	debug_world(ctx);
 

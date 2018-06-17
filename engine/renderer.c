@@ -154,8 +154,7 @@ int get_sprite_under_cursor(World* world, int cx, int cy) /* Still, pretty hacky
 	if (!is_cursor_inside_window())
 		return -1;
 
-	Camera * camera = NULL;
-	active_camera(&camera);
+	Camera * camera = get_active_camera();
 	if (camera == NULL)
 		return -1;
 
@@ -234,8 +233,7 @@ void draw_creature(Creature* creature)
 
 	Transform sprite_transform = creature->transform;
 
-	Camera * camera = NULL;
-	active_camera(&camera);
+	Camera * camera = get_active_camera();
 	int index = 0;
 	if (camera != NULL)
 		index = determine_orientation(creature->transform, camera);
@@ -319,8 +317,7 @@ void draw_object3d(Object3D* object3d)
 
 void draw_world(World* world)
 {
-	Camera * camera = NULL;
-	active_camera(&camera);
+	Camera * camera = get_active_camera();
 	if (camera == NULL)
 		return;
 

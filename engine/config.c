@@ -1,7 +1,7 @@
 #include "config.h"
 
 /* Global state */
-Config config;
+static Config config;
 
 const unsigned int DEFAULT_WIDTH = 1280;
 const unsigned int DEFAULT_HEIGHT = 720;

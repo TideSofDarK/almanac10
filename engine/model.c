@@ -80,10 +80,10 @@ void process_node(const char * folder, Model* model, aiNode *node, const aiScene
 	}
 }
 
-void construct_model(Model** _model, const char * folder, const char * name)
+void construct_model(Model ** _model, const char * folder, const char * name)
 {
-	*_model = malloc(sizeof(Model));
-	Model *model = *_model;
+	* _model = malloc(sizeof(Model));
+	Model * model = * _model;
 
 	model->name = name;
 	model->meshes = NULL;
@@ -91,7 +91,7 @@ void construct_model(Model** _model, const char * folder, const char * name)
 	char * obj_path = NULL;
 	asprintf(&obj_path, "%s%s.obj", folder, name);
 
-	const aiScene* ai_scene = aiImportFile(obj_path, aiProcess_Triangulate | aiProcess_FlipUVs);
+	const aiScene * ai_scene = aiImportFile(obj_path, aiProcess_Triangulate | aiProcess_FlipUVs);
 	process_node(folder, model, ai_scene->mRootNode, ai_scene);
 
 	aiReleaseImport(ai_scene);

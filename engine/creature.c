@@ -115,7 +115,7 @@ void update_creature(Creature* creature)
 			vec3 pos;
 			do
 			{
-				float distance = min_distance + ((float)rand() / (float)(RAND_MAX / (max_distance - min_distance)));
+				float distance = min_distance + ((float)rand() / (RAND_MAX / (max_distance - min_distance)));
 				float angle = (float)rand() / (float)(RAND_MAX / (M_PI * 2));
 
 				/* TODO: don't forget about y! */

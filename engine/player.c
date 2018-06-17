@@ -25,8 +25,7 @@ void destruct_player(Player ** _player)
 
 void update_player(Player *player)
 {
-    Camera * camera = NULL;
-    active_camera(&camera);
+    Camera * camera = get_active_camera();
     if (camera == NULL)
         return;
 
@@ -48,11 +47,11 @@ void ground_navigation(Camera * camera)
     /* Camera pitch */
     if (is_press_or_pressed(CT_CAMERA_UP))
     {
-        translate_euler_axis(&camera->transform, 1, rotatation_speed);
+        transform_rotate_axis(&camera->transform, 1, rotatation_speed);
     }
     if (is_press_or_pressed(CT_CAMERA_DOWN))
     {
-        translate_euler_axis(&camera->transform, 1, -rotatation_speed);
+        transform_rotate_axis(&camera->transform, 1, -rotatation_speed);
     }
     if (get_control_state(CT_CAMERA_HOME) == BS_PRESSED)
     {
@@ -69,13 +68,13 @@ void ground_navigation(Camera * camera)
     {
         vec3 offset;
         glm_vec_mul(moving_front, (vec3) { speed, speed, speed }, offset);
-        translate_pos_vec3(&camera->transform, offset);
+        transform_translate_vec3(&camera->transform, offset);
     }
     if (is_press_or_pressed(CT_BACK))
     {
         vec3 offset;
         glm_vec_mul(moving_front, (vec3) { -speed, -speed, -speed }, offset);
-        translate_pos_vec3(&camera->transform, offset);
+        transform_translate_vec3(&camera->transform, offset);
     }
     if (is_press_or_pressed(CT_LEFT))
     {
@@ -85,12 +84,12 @@ void ground_navigation(Camera * camera)
             glm_vec_cross(front, (float*)get_default_up(), offset);
             glm_normalize(offset);
             glm_vec_mul(offset, (vec3) { -speed, -speed, -speed }, offset);
-            translate_pos_vec3(&camera->transform, offset);
+            transform_translate_vec3(&camera->transform, offset);
         }
         else
         {
             // Yaw
-            translate_euler_axis(&camera->transform, 0, -rotatation_speed);
+            transform_rotate_axis(&camera->transform, 0, -rotatation_speed);
         }
     }
     if (is_press_or_pressed(CT_RIGHT))
@@ -101,18 +100,14 @@ void ground_navigation(Camera * camera)
             glm_vec_cross(front, (float*)get_default_up(), offset);
             glm_normalize(offset);
             glm_vec_mul(offset, (vec3) { speed, speed, speed }, offset);
-            translate_pos_vec3(&camera->transform, offset);
+            transform_translate_vec3(&camera->transform, offset);
         }
         else
         {
             // Yaw
-            translate_euler_axis(&camera->transform, 0, rotatation_speed);
+            transform_rotate_axis(&camera->transform, 0, rotatation_speed);
         }
     }
-
-    vec3 camera_center;
-    glm_vec_add(camera->transform.pos, front, camera_center);
-    glm_lookat(camera->transform.pos, camera_center, (float*)get_default_up(), camera->view);
 }
 
 void fly_navigation(Camera * camera)

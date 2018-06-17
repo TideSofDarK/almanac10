@@ -48,8 +48,7 @@ int is_grid_constructed()
 
 void draw_grid()
 {
-	Camera * camera = NULL;
-	active_camera(&camera);
+	Camera * camera = get_active_camera();
 	if (camera == NULL)
 		return;
 

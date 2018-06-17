@@ -19,6 +19,8 @@
 
 #define BTN_DEFAULT_EDITOR GLFW_KEY_F6
 
+#define BTN_DEFAULT_EXIT GLFW_KEY_ESCAPE
+
 typedef enum
 {
 	CT_LMB,
@@ -38,6 +40,8 @@ typedef enum
 	CT_ATTACK,
 
 	CT_EDITOR,
+
+	CT_EXIT,
 
 	CT_LAST
 } ControlType;

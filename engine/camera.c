@@ -40,32 +40,32 @@ void destruct_camera(Camera ** _camera)
 	*_camera = NULL;
 }
 
-void camera_direction(Camera* camera, vec3 dest)
+void camera_direction(Camera * camera, vec3 * dest)
 {
 	vec3 front;
 	euler_to_front(camera->transform.euler, front);
-	glm_vec_sub(camera->transform.pos, front, dest);
-	glm_normalize(dest);
+	glm_vec_sub(camera->transform.pos, front, * dest);
+	glm_normalize(* dest);
 }
 
-void camera_right(Camera* camera, vec3 dest)
+void camera_right(Camera * camera, vec3 * dest)
 {
 	vec3 direction;
-	camera_direction(camera, direction);
+	camera_direction(camera, &direction);
 
-	glm_vec_cross((float*)get_default_up(), direction, dest);
-	glm_normalize(dest);
+	glm_vec_cross((float*)get_default_up(), direction, * dest);
+	glm_normalize(* dest);
 }
 
-void camera_up(Camera* camera, vec3 dest)
+void camera_up(Camera * camera, vec3 * dest)
 {
 	vec3 direction;
-	camera_direction(camera, direction);
+	camera_direction(camera, &direction);
 
 	vec3 right;
-	camera_right(camera, right);
+	camera_right(camera, &right);
 
-	glm_vec_cross(direction, right, dest);
+	glm_vec_cross(direction, right, * dest);
 }
 
 void camera_projection(Camera* camera, float fov, float width, float height)
@@ -73,17 +73,21 @@ void camera_projection(Camera* camera, float fov, float width, float height)
 	glm_perspective(glm_rad(fov), width / height, 0.1f, 100.0f, camera->projection);
 }
 
-const float* get_default_front()
+const float * get_default_front()
 {
 	return DEFAULT_FRONT;
 }
 
-const float* get_default_up()
+const float * get_default_up()
 {
 	return DEFAULT_UP;
 }
 
-void update_camera(Camera* camera, float delta_time)
+void update_camera(Camera * camera)
 {
-
+	vec3 front = {};
+	euler_to_front(camera->transform.euler, front);
+	vec3 camera_center = {};
+	glm_vec_add(camera->transform.pos, front, camera_center);
+	glm_lookat(camera->transform.pos, camera_center, (float*)get_default_up(), camera->view);
 }

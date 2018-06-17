@@ -115,8 +115,7 @@ void editor_ui(struct nk_context *ctx)
 
 void update_editor()
 {
-    Camera * camera = NULL;
-    active_camera(&camera);
+    Camera * camera = get_active_camera();
     if (camera == NULL)
         return;
 
@@ -173,18 +172,18 @@ void toggle_editor()
 {
     if (get_game_state() != GS_EDITOR)
     {
-        active_world(&previous_world);
+        previous_world = get_active_world();
 
         if (world == NULL)
         {
             construct_world(&world, "new_world");
             construct_terrain(&world->terrain, 16);
 
-            insert_world(&world, true);
+            insert_world(world, true);
         }
         else
         {
-            make_world_active(&world);
+            make_world_active(world);
         }
 
         if (editor_mode == EM_TERRAIN)
@@ -194,7 +193,7 @@ void toggle_editor()
     }
     else
     {
-        make_world_active(&previous_world);
+        make_world_active(previous_world);
     }
 
     set_game_state(get_game_state() == GS_WORLD ? GS_EDITOR : GS_WORLD);
@@ -231,8 +230,8 @@ void editor_navigation(Camera * camera)
         offsetX *= sensitivity;
         offsetY *= sensitivity;
 
-        translate_euler_axis(&camera->transform, 0, offsetX);
-        translate_euler_axis(&camera->transform, 1, offsetY);
+        transform_rotate_axis(&camera->transform, 0, offsetX);
+        transform_rotate_axis(&camera->transform, 1, offsetY);
     }
 
     vec3 front;
@@ -243,13 +242,13 @@ void editor_navigation(Camera * camera)
     {
         vec3 offset;
         glm_vec_mul(front, (vec3) { speed, speed, speed }, offset);
-        translate_pos_vec3(&camera->transform, offset);
+        transform_translate_vec3(&camera->transform, offset);
     }
     if (is_press_or_pressed(CT_BACK))
     {
         vec3 offset;
         glm_vec_mul(front, (vec3) { -speed, -speed, -speed }, offset);
-        translate_pos_vec3(&camera->transform, offset);
+        transform_translate_vec3(&camera->transform, offset);
     }
     if (is_press_or_pressed(CT_LEFT))
     {
@@ -259,12 +258,12 @@ void editor_navigation(Camera * camera)
             glm_vec_cross(front, (float*)get_default_up(), offset);
             glm_normalize(offset);
             glm_vec_mul(offset, (vec3) { -speed, -speed, -speed }, offset);
-            translate_pos_vec3(&camera->transform, offset);
+            transform_translate_vec3(&camera->transform, offset);
         }
         else
         {
             // Yaw
-            translate_euler_axis(&camera->transform, 0, -rotatation_speed);
+            transform_rotate_axis(&camera->transform, 0, -rotatation_speed);
         }
     }
     if (is_press_or_pressed(CT_RIGHT))
@@ -275,18 +274,14 @@ void editor_navigation(Camera * camera)
             glm_vec_cross(front, (float*)get_default_up(), offset);
             glm_normalize(offset);
             glm_vec_mul(offset, (vec3) { speed, speed, speed }, offset);
-            translate_pos_vec3(&camera->transform, offset);
+            transform_translate_vec3(&camera->transform, offset);
         }
         else
         {
             // Yaw
-            translate_euler_axis(&camera->transform, 0, rotatation_speed);
+            transform_rotate_axis(&camera->transform, 0, rotatation_speed);
         }
     }
-
-    vec3 camera_center;
-    glm_vec_add(camera->transform.pos, front, camera_center);
-    glm_lookat(camera->transform.pos, camera_center, (float*)get_default_up(), camera->view);
 }
 
 Gizmo * get_gizmos()

@@ -9,9 +9,9 @@ void init_transform(Transform * transform)
 
 void euler_to_front(vec3 euler, vec3 dest)
 {
-	float x = cosf(glm_rad(euler[1])) * (float)cosf(glm_rad(euler[0]));
+	float x = cosf(glm_rad(euler[1])) * cosf(glm_rad(euler[0]));
 	float y = sinf(glm_rad(euler[1]));
-	float z = cosf(glm_rad(euler[1])) * (float)sinf(glm_rad(euler[0]));
+	float z = cosf(glm_rad(euler[1])) * sinf(glm_rad(euler[0]));
 	glm_vec_copy((vec3) { x, y, z }, dest);
 	glm_normalize(dest);
 }
@@ -33,22 +33,22 @@ float transform_distance(Transform t1, Transform t2)
 	return glm_vec_distance(t1.pos, t2.pos);
 }
 
-void scale_by_float(Transform * transform, float scale)
+void transform_scale(Transform *transform, float scale)
 {
 	glm_vec_copy((vec3) { scale, scale, scale }, transform->scale);
 }
 
-void translate_pos_vec3(Transform* transform, vec3 offset)
+void transform_translate_vec3(Transform *transform, vec3 offset)
 {
 	glm_vec_add(transform->pos, offset, transform->pos);
 }
 
-void translate_pos_axis(Transform* transform, unsigned int i, float offset)
+void transform_translate_axis(Transform *transform, unsigned int i, float offset)
 {
 	transform->pos[i] += offset;
 }
 
-void translate_euler_axis(Transform* transform, unsigned int i, float offset)
+void transform_rotate_axis(Transform *transform, unsigned int i, float offset)
 {
 	float value = transform->euler[i];
 	if (value + offset > 0.0f)
