@@ -86,16 +86,16 @@ float get_delta_time() {
     return fps.delta_time;
 }
 
-float intersect_ray_sphere(vec3 p1, vec3 p2, vec3 p3, float r) {
-    float x1 = p1[0];
-    float y1 = p1[1];
-    float z1 = p1[2];
-    float x2 = p2[0];
-    float y2 = p2[1];
-    float z2 = p2[2];
-    float x3 = p3[0];
-    float y3 = p3[1];
-    float z3 = p3[2];
+bool intersect_ray_sphere(vec3 r_origin, vec3 r_end, vec3 s_origin, float r) {
+    float x1 = r_origin[0];
+    float y1 = r_origin[1];
+    float z1 = r_origin[2];
+    float x2 = r_end[0];
+    float y2 = r_end[1];
+    float z2 = r_end[2];
+    float x3 = s_origin[0];
+    float y3 = s_origin[1];
+    float z3 = s_origin[2];
 
     float dx = x2 - x1;
     float dy = y2 - y1;
@@ -106,7 +106,71 @@ float intersect_ray_sphere(vec3 p1, vec3 p2, vec3 p3, float r) {
     float c = x3 * x3 + y3 * y3 + z3 * z3 + x1 * x1 + y1 * y1 + z1 * z1 - 2.0f * (x3 * x1 + y3 * y1 + z3 * z1) -
               r * r;
 
-    float test = b * b - 4.0f * a * c;
+    return b * b - 4.0f * a * c >= 0.0f;
+}
 
-    return test;
+bool intersect_ray_cylinder(vec3 r_origin, vec3 r_end, vec3 c_origin, vec3 c_end, float c_r) {
+    vec3 r_norm = {};
+    glm_vec_sub(r_end, r_origin, r_norm);
+    glm_normalize(r_norm);
+
+    vec3 A = {};
+    glm_vec_copy(c_origin, A);
+    vec3 B = {};
+    glm_vec_copy(c_end, B);
+
+//    Quat.rotateVec3(cap.rotation,A); //Apply Rotation first
+//    Quat.rotateVec3(cap.rotation,B);
+//    A.add(cap.position);	//Then Translation
+//    B.add(cap.position);
+
+    vec3 AB = {};
+    glm_vec_sub(B, A, AB);
+    vec3 AO = {};
+    glm_vec_sub(r_origin, A, AO);
+    vec3 AOxAB = {};
+    glm_vec_cross(AO, AB, AOxAB);
+    vec3 VxAB = {};
+    glm_vec_cross(r_norm, AB, VxAB);
+
+    float ab2 = glm_vec_dot(AB, AB);
+    float a = glm_vec_dot(VxAB, VxAB);
+    float b = 2.0f * glm_vec_dot(VxAB, AOxAB);
+    float c = glm_vec_dot(AOxAB, AOxAB) - (c_r * c_r * ab2);
+    float d = b * b - 4.0f * a * c;
+
+    if (d < 0) { return false; }
+
+    float t = (-b - sqrtf(d)) / (2.0f * a);
+    if (t < 0) {
+        float aLen2 = glm_vec_distance(A, r_origin);
+        float bLen2 = glm_vec_distance(B, r_origin);
+
+        if (aLen2 < bLen2) {
+            //printf("t is parallel, test top cap\n");
+        } else {
+            //printf("t is parallel, test bottom cap\n");
+        }
+
+        return false;
+    }
+
+    vec3 r_vec = {};
+    glm_vec_copy(r_norm, r_vec);
+    r_vec[0] = r_vec[0] * t;
+    r_vec[1] = r_vec[1] * t;
+    r_vec[2] = r_vec[2] * t;
+
+    vec3 intersection = {};
+    glm_vec_add(r_vec, r_origin, intersection);
+
+    vec3 intersection_length = {};
+    glm_vec_sub(intersection, A, intersection_length);
+
+    float t_limit = glm_vec_dot(intersection_length, AB) / ab2;
+    if (t_limit >= 0 && t_limit <= 1) return true;
+    else if (t_limit < 0) return false;
+    else if (t_limit > 1) return false;
+
+    return false;
 }

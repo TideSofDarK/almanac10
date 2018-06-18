@@ -19,6 +19,7 @@ static ModelRenderer model_renderer;
 
 static Model *primitive_sphere = NULL;
 static Model *primitive_arrow = NULL;
+static Model *primitive_cylinder = NULL;
 
 RenderData create_quad_render_data(int buffer_size, const float *vertices) {
     RenderData render_data;
@@ -102,6 +103,7 @@ void init_renderers() {
 
     primitive_sphere = get_model("assets/models/tools/sphere/", "sphere");
     primitive_arrow = get_model("assets/models/tools/arrow/", "arrow");
+    primitive_cylinder = get_model("assets/models/tools/cylinder/", "cylinder");
 
     /* TODO: Remove later */
     if (is_grid_constructed() == 0) {
@@ -279,8 +281,8 @@ static inline void draw_arrow(Transform transform, float scale, vec4 color) {
     set_uniform_vec4(model_renderer.shader, "solid_color", color[0], color[1], color[2], color[3]);
     set_uniform_mat4(model_renderer.shader, "model", model);
 
-    glBindVertexArray(primitive_arrow->meshes[0]->render_data.VAO);
-    glDrawElements(GL_TRIANGLES, (unsigned int) vector_size(primitive_arrow->meshes[0]->indices), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(primitive_cylinder->meshes[0]->render_data.VAO);
+    glDrawElements(GL_TRIANGLES, (unsigned int) vector_size(primitive_cylinder->meshes[0]->indices), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
     set_uniform_vec4(model_renderer.shader, "solid_color", 0.0f, 0.0f, 0.0f, 0.0f);
@@ -352,15 +354,10 @@ void draw_world(World *world) {
     set_uniform_mat4(model_renderer.shader, "view", camera->view);
     set_uniform_mat4(model_renderer.shader, "projection", camera->projection);
 
-    if (world->terrain != NULL)
-        draw_terrain(world->terrain);
-
-    for (size_t i = 0; i < vector_size(world->objects3d); i++) {
-        draw_object3d(world->objects3d[i]);
-    }
-
     /* Draw gizmos */
     if (get_game_state() == GS_EDITOR) {
+        //glDisable(GL_DEPTH_TEST);
+        //glDepthMask(GL_FALSE);
         Gizmo *gizmos = get_gizmos();
         for (size_t i = 0; i < vector_size(gizmos); i++) {
             switch (gizmos[i].type) {
@@ -371,18 +368,16 @@ void draw_world(World *world) {
                     draw_arrow(gizmos[i].transform, 1.0f, gizmos[i].color);
                     break;
             }
-
-            for (size_t c = 0; c < vector_size(gizmos[i].children); ++c) {
-                switch (gizmos[i].children[c].type) {
-                    case GT_SPHERE:
-                        draw_sphere(gizmos[i].children[c].transform, 1.0f, gizmos[i].children[c].color);
-                        break;
-                    case GT_ARROW:
-                        draw_arrow(gizmos[i].children[c].transform, 1.0f, gizmos[i].children[c].color);
-                        break;
-                }
-            }
         }
+        //glEnable(GL_DEPTH_TEST);
+        //glDepthMask(GL_TRUE);
+    }
+
+    if (world->terrain != NULL)
+        draw_terrain(world->terrain);
+
+    for (size_t i = 0; i < vector_size(world->objects3d); i++) {
+        draw_object3d(world->objects3d[i]);
     }
 
     finish_model_rendering();
@@ -466,10 +461,4 @@ void reset_opengl_settings() {
     glClearDepth(1.0f);
     glClearColor(0.3f, 0.2f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-void unbind_render_buffers() {
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }

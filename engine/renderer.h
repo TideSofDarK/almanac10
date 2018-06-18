@@ -11,7 +11,7 @@
 #include "object.h"
 
 #define SPRITE_RENDERER_SCALE 1.0f
-#define MODEL_RENDERER_SCALE 1.0f
+#define MODEL_RENDERER_SCALE 0.5f
 
 typedef struct {
     unsigned int texture_id, depth_id, FBO;
@@ -62,4 +62,3 @@ void display_everything();
 
 void reset_opengl_settings();
 
-void unbind_render_buffers();

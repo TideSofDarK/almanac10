@@ -24,4 +24,6 @@ float get_fps();
 
 float get_delta_time();
 
-float intersect_ray_sphere(vec3, vec3, vec3, float);
+bool intersect_ray_sphere(vec3, vec3, vec3, float);
+
+bool intersect_ray_cylinder(vec3, vec3, vec3, vec3, float);

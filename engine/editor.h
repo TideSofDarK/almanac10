@@ -24,10 +24,9 @@ typedef enum {
 
 typedef struct Gizmo {
     Transform transform;
-    vec3 *value;
+    void *value;
     vec4 color;
     GizmoType type;
-    struct Gizmo *children;
 } Gizmo;
 
 void shutdown_editor();
