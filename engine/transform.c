@@ -17,12 +17,16 @@ void euler_to_front(vec3 euler, vec3 dest) {
 void transform_to_mat4(Transform transform, mat4 dest) {
     glm_mat4_identity(dest);
 
-    mat4 rot;
+    mat4 rot = {};
     glm_euler((vec3) {glm_rad(transform.euler[0]), glm_rad(transform.euler[1]), glm_rad(transform.euler[2])}, rot);
 
     glm_translate(dest, transform.pos);
     glm_scale(dest, transform.scale);
     glm_mul_rot(dest, rot, dest);
+}
+
+void transform_front(Transform transform, vec3 dest) {
+    euler_to_front(transform.euler, dest);
 }
 
 float transform_distance(Transform t1, Transform t2) {

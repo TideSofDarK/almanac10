@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
     bg.r = 0.20f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
 
     init_game(window);
+    init_editor();
     init_renderers();
     init_input();
 

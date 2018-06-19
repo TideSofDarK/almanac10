@@ -22,14 +22,15 @@
 
 #define GIZMO_WHITE (vec4){1.0f,1.0f,1.0f,1.0f}
 
-static EditorMode editor_mode = EM_TERRAIN;
+static EditorMode editor_mode;
 
-static Gizmo *all_gizmos = NULL;
-static Gizmo *drag = NULL;
-static int selected_gizmo = -1;
+static Gizmo *all_gizmos;
+static int selected_gizmo;
 
-static World *world = NULL;
-static World *previous_world = NULL;
+static Drag drag = {};
+
+static World *world;
+static World *previous_world;
 
 static inline void clear_gizmos(Gizmo **gizmos) {
     if (gizmos == NULL) return;
@@ -83,13 +84,6 @@ static inline void select_gizmo(int index) {
     init_axis_gizmos(&all_gizmos[selected_gizmo]);
 }
 
-void shutdown_editor() {
-    clear_gizmos(&all_gizmos);
-
-    world = NULL;
-    previous_world = NULL;
-}
-
 static inline void init_gizmo_position(Gizmo *gizmo, float scale) {
     init_transform(&gizmo->transform);
     glm_vec_copy(*(vec3 *) gizmo->value, gizmo->transform.pos);
@@ -141,6 +135,22 @@ static inline void editor_toolbar(struct nk_context *ctx) {
     nk_end(ctx);
 }
 
+void init_editor() {
+    editor_mode = EM_TERRAIN;
+    all_gizmos = NULL;
+    selected_gizmo = -1;
+    drag.gizmo = NULL;
+    world = NULL;
+    previous_world = NULL;
+}
+
+void shutdown_editor() {
+    clear_gizmos(&all_gizmos);
+
+    world = NULL;
+    previous_world = NULL;
+}
+
 void editor_ui(struct nk_context *ctx) {
     if (world == NULL)
         return;
@@ -158,11 +168,11 @@ void update_editor() {
     cursor_position(&cx, &cy);
 
     /* Gizmo drag */
-    if (drag != NULL) {
+    if (drag.gizmo != NULL) {
         if (get_control_state(CT_LMB) == BS_RELEASED) {
             select_gizmo(selected_gizmo);
 
-            drag = NULL;
+            drag.gizmo = NULL;
             px = py = 0;
             return;
         } else if ((px == 0 && py == 0)) {
@@ -174,17 +184,25 @@ void update_editor() {
             px = cx;
             py = cy;
 
-            const float sensitivity = 0.0005f;
-            ox *= sensitivity;
-            oy *= sensitivity;
+            vec3 r_origin = {}, r_dir = {}, new_pos = {};
+            cursor_raycast_custom(camera, cx + drag.offset[0], cy + drag.offset[1], r_origin, r_dir);
 
-            *(float *) drag->value += ox + oy;
+            vec3 or_origin = {}, or_dir = {};
+            cursor_raycast_custom(camera, ox, oy, or_origin, or_dir);
+
+            float distance = glm_vec_distance(drag.gizmo->transform.pos, or_origin);
+            glm_vec_copy(r_origin, new_pos);
+            glm_vec_muladds(r_dir, distance, new_pos);
+
+            glm_vec3_print(new_pos, stdout);
+
+            *(float *) drag.gizmo->value = new_pos[0] / (float)world->terrain->grid_size;
             rebuild_terrain(world->terrain);
 
             init_gizmo_position(&all_gizmos[selected_gizmo], (float) world->terrain->grid_size);
             select_gizmo(selected_gizmo); /* Rebuild axis gizmos positions */
 
-            glm_vec4_copy(GIZMO_WHITE, drag->color);
+            glm_vec4_copy(GIZMO_WHITE, drag.gizmo->color);
         }
     } else if (is_press_or_pressed(CT_LMB)) { /* Gizmos hit test */
         vec3 r_origin = {}, r_dir = {}, r_end = {};
@@ -192,32 +210,48 @@ void update_editor() {
         glm_vec_copy(r_origin, r_end);
         glm_vec_muladds(r_dir, GIZMO_RAY, r_end);
 
-        if (get_control_state(CT_LMB) == BS_PRESSED) { /* Single click (selecting) */
+        /* Single click (selecting) */
+        /* Choosing closest to camera */
+        int potential_gizmo = -1;
+        if (get_control_state(CT_LMB) == BS_PRESSED) {
             for (size_t i = 0; i < vector_size(all_gizmos); i++) {
-                bool exit = false;
+                float scale = transform_distance(camera->transform, all_gizmos[i].transform) * GIZMO_SCALE;
                 switch (all_gizmos[i].type) {
                     case GT_SPHERE:
-                        if (intersect_ray_sphere(r_origin, r_end, all_gizmos[i].transform.pos, GIZMO_SPHERE_RADIUS)) {
-                            select_gizmo((int) i);
-                            exit = true;
+                        if (potential_gizmo == -1 ||
+                            glm_vec_distance(camera->transform.pos,
+                                             all_gizmos[i].transform.pos) <
+                            glm_vec_distance(camera->transform.pos,
+                                             all_gizmos[potential_gizmo].transform.pos)) {
+                            if (intersect_ray_sphere(r_origin, r_end, all_gizmos[i].transform.pos,
+                                                     GIZMO_SPHERE_RADIUS * scale)) {
+                                potential_gizmo = (int) i;
+                            }
                         }
                         break;
                     default:
                         break;
                 }
-                if (exit) break;
             }
-        } else if (get_control_state(CT_LMB) == BS_PRESS) { /* Axis movement */
-            for (size_t i = 0; i < vector_size(all_gizmos); i++) {
+        }
+        if (potential_gizmo >= 0) {
+            select_gizmo(potential_gizmo);
+        } else if (selected_gizmo != -1) {
+            for (size_t i = vector_size(all_gizmos) - 4; i < vector_size(all_gizmos); i++) {
                 bool exit = false;
-                vec3 target = {};
+                vec3 c_end = {};
+                float scale = transform_distance(camera->transform, all_gizmos[i].transform) * GIZMO_SCALE;
                 switch (all_gizmos[i].type) {
                     case GT_ARROW:
-                        euler_to_front(all_gizmos[i].transform.euler, target);
-                        glm_vec_add(all_gizmos[i].transform.pos, target, target);
-                        if (intersect_ray_cylinder(r_origin, r_end, all_gizmos[i].transform.pos, target,
-                                                   GIZMO_CYLINDER_RADIUS)) {
-                            drag = &all_gizmos[i];
+                        transform_front(all_gizmos[i].transform, c_end);
+                        glm_vec_add(all_gizmos[i].transform.pos, c_end, c_end);
+                        if (intersect_ray_cylinder(r_origin, r_end, all_gizmos[i].transform.pos, c_end,
+                                                   GIZMO_CYLINDER_RADIUS * scale)) {
+                            drag.gizmo = &all_gizmos[i];
+                            world_to_screen(camera, drag.gizmo->transform.pos, drag.offset);
+                            drag.offset[0] -= cx;
+                            drag.offset[1] -= cy;
+
                             exit = true;
                         }
                         break;
@@ -287,7 +321,7 @@ void editor_navigation(Camera *camera) {
     }
 
     vec3 front = {};
-    euler_to_front(camera->transform.euler, front);
+    transform_front(camera->transform, front);
 
     /* WASD */
     if (is_press_or_pressed(CT_FORWARD)) {

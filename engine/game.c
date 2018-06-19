@@ -41,6 +41,7 @@ void shutdown_game() {
     free_precached_models();
 
     destruct_player(&game->player);
+    destruct_camera(&game->camera);
 
     free(game);
     game = NULL;

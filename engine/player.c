@@ -50,9 +50,9 @@ void ground_navigation(Camera *camera) {
         camera->transform.euler[1] = 0.0f;
     }
 
-    vec3 front;
-    euler_to_front(camera->transform.euler, front);
-    vec3 moving_front;
+    vec3 front = {};
+    transform_front(camera->transform, front);
+    vec3 moving_front = {};
     glm_vec_mul(front, (vec3) {1.0f, 0.0f, 1.0f}, moving_front);
 
     /* WASD */

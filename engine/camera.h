@@ -12,7 +12,9 @@ void construct_camera(Camera **);
 
 void destruct_camera(Camera **);
 
-void camera_direction(Camera *, vec3 *);
+void world_to_screen(Camera *, vec3, vec3);
+
+void camera_front(Camera *, vec3);
 
 void camera_right(Camera *, vec3 *);
 

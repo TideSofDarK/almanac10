@@ -27,8 +27,7 @@ void construct_camera(Camera **_camera) {
 
     /* Init projection */
     glm_mat4_copy(GLM_MAT4_IDENTITY, camera->projection);
-    Config config = get_config();
-    camera_projection(camera, config.fov, (float) config.w, (float) config.h);
+    camera_projection(camera, get_config().fov, (float) get_config().w, (float) get_config().h);
 }
 
 void destruct_camera(Camera **_camera) {
@@ -38,26 +37,35 @@ void destruct_camera(Camera **_camera) {
     *_camera = NULL;
 }
 
-void camera_direction(Camera *camera, vec3 *dest) {
-    vec3 front;
-    euler_to_front(camera->transform.euler, front);
-    glm_vec_sub(camera->transform.pos, front, *dest);
-    glm_normalize(*dest);
+void world_to_screen(Camera *camera, vec3 world, vec3 screen) {
+    vec4 v = {};
+    glm_vec4_copy((vec4) {0.0f, 0.0f, (float) get_config().w, (float) get_config().h}, v);
+    mat4 m = {};
+    glm_mat4_mul(camera->projection, camera->view, m);
+    glm_project(world, m, v, screen);
+    screen[1] = (float) get_config().h - screen[1];
+}
+
+void camera_front(Camera *camera, vec3 dest) {
+    vec3 front = {};
+    transform_front(camera->transform, front);
+    glm_vec_sub(camera->transform.pos, front, dest);
+    glm_normalize(dest);
 }
 
 void camera_right(Camera *camera, vec3 *dest) {
-    vec3 direction;
-    camera_direction(camera, &direction);
+    vec3 direction = {};
+    camera_front(camera, direction);
 
     glm_vec_cross((float *) get_default_up(), direction, *dest);
     glm_normalize(*dest);
 }
 
 void camera_up(Camera *camera, vec3 *dest) {
-    vec3 direction;
-    camera_direction(camera, &direction);
+    vec3 direction = {};
+    camera_front(camera, direction);
 
-    vec3 right;
+    vec3 right = {};
     camera_right(camera, &right);
 
     glm_vec_cross(direction, right, *dest);

@@ -11,7 +11,7 @@
 #include "object.h"
 
 #define SPRITE_RENDERER_SCALE 1.0f
-#define MODEL_RENDERER_SCALE 0.5f
+#define MODEL_RENDERER_SCALE 1.0f
 
 typedef struct {
     unsigned int texture_id, depth_id, FBO;
@@ -22,6 +22,7 @@ typedef struct {
     RenderData render_data;
     FrameBufferRenderData fb_render_data;
     Shader *shader;
+    Shader *gizmo_shader;
     Shader *render_texture_shader;
 } ModelRenderer;
 

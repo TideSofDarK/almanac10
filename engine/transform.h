@@ -12,6 +12,8 @@ void init_transform(Transform *);
 
 void euler_to_front(vec3, vec3);
 
+void transform_front(Transform transform, vec3 dest);
+
 void transform_to_mat4(Transform, mat4);
 
 float transform_distance(Transform, Transform);

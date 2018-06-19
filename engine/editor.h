@@ -11,6 +11,8 @@
 
 #include "camera.h"
 
+#define GIZMO_SCALE 0.15f
+
 typedef enum {
     EM_TERRAIN,
     EM_PROPS,
@@ -19,7 +21,8 @@ typedef enum {
 
 typedef enum {
     GT_SPHERE,
-    GT_ARROW
+    GT_ARROW,
+    GT_CYLINDER
 } GizmoType;
 
 typedef struct Gizmo {
@@ -28,6 +31,13 @@ typedef struct Gizmo {
     vec4 color;
     GizmoType type;
 } Gizmo;
+
+typedef struct {
+    Gizmo * gizmo;
+    vec3 offset;
+} Drag;
+
+void init_editor();
 
 void shutdown_editor();
 

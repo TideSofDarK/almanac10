@@ -100,10 +100,8 @@ void cursor_position(float *_cx, float *_cy) {
     *_cy = (float) cy;
 }
 
-void cursor_raycast(Camera *camera, vec3 origin, vec3 direction) {
-    float fcx, fcy;
-    cursor_position(&fcx, &fcy);
-
+void cursor_raycast_custom(Camera * camera, float fcx, float fcy, vec3 origin, vec3 direction)
+{
     float w = (float) get_config().w;
     float h = (float) get_config().h;
 
@@ -138,4 +136,11 @@ void cursor_raycast(Camera *camera, vec3 origin, vec3 direction) {
     glm_normalize(direction);
 
     glm_vec3(ray_start_world, origin);
+}
+
+void cursor_raycast(Camera *camera, vec3 origin, vec3 direction) {
+    float fcx, fcy;
+    cursor_position(&fcx, &fcy);
+
+    cursor_raycast_custom(camera, fcx, fcy, origin, direction);
 }

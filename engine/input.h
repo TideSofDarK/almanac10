@@ -68,4 +68,6 @@ void set_cursor_hidden(bool);
 
 void cursor_position(float *, float *);
 
+void cursor_raycast_custom(Camera *, float, float, vec3, vec3);
+
 void cursor_raycast(Camera *, vec3, vec3);

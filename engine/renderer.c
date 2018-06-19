@@ -12,6 +12,7 @@
 #include "terrain.h"
 #include "editor.h"
 #include "input.h"
+#include "camera.h"
 
 /* Global state */
 static SpriteRenderer sprite_renderer;
@@ -94,6 +95,7 @@ void init_renderers() {
 
     /* Model renderer; also includes render texture renderer to merge 2D and 3D buffers */
     construct_shader(&model_renderer.shader, "mesh.vert", "mesh.frag", NULL);
+    construct_shader(&model_renderer.gizmo_shader, "gizmo.vert", "gizmo.frag", NULL);
     construct_shader(&model_renderer.render_texture_shader, "render_texture.vert", "render_texture.frag", NULL);
     int buffer_size = 0;
     const float *render_texture_vertices = get_render_texture_vertices_and_tex_coords(&buffer_size);
@@ -117,6 +119,7 @@ void shutdown_renderers() {
     glDeleteTextures(1, &sprite_renderer.fb_render_data.depth_id);
 
     destruct_shader(&model_renderer.shader);
+    destruct_shader(&model_renderer.gizmo_shader);
     destruct_shader(&model_renderer.render_texture_shader);
 
     glDeleteTextures(1, &model_renderer.fb_render_data.texture_id);
@@ -244,48 +247,34 @@ void draw_projectile(Projectile *projectile) {
 }
 
 static inline void draw_terrain(Terrain *terrain) {
-    mat4 model;
-    transform_to_mat4(terrain->transform, model);
+    mat4 m = {};
+    transform_to_mat4(terrain->transform, m);
 
     glActiveTexture(GL_TEXTURE0);
     set_uniform_int(model_renderer.shader, "texture_diffuse1", 0);
     /* TODO: Terrain textures */
     glBindTexture(GL_TEXTURE_2D, 7);
 
-    set_uniform_mat4(model_renderer.shader, "model", model);
+    set_uniform_mat4(model_renderer.shader, "model", m);
 
     glBindVertexArray(terrain->render_data.VAO);
     glDrawElements(GL_TRIANGLES, (unsigned int) vector_size(terrain->indices), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
 
-/* TODO: General primitive rendering refactoring */
-static inline void draw_sphere(Transform transform, float scale, vec4 color) {
-    mat4 model;
-    transform_to_mat4(transform, model);
+static inline void draw_gizmo(Model *model, Transform transform, float scale, vec4 color) {
+    mat4 m = {};
+    transform_to_mat4(transform, m);
+    glm_scale(m, (vec3) { scale, scale, scale });
 
-    set_uniform_vec4(model_renderer.shader, "solid_color", color[0], color[1], color[2], color[3]);
-    set_uniform_mat4(model_renderer.shader, "model", model);
+    set_uniform_vec4(model_renderer.gizmo_shader, "color", color[0], color[1], color[2], color[3]);
+    set_uniform_mat4(model_renderer.gizmo_shader, "model", m);
 
-    glBindVertexArray(primitive_sphere->meshes[0]->render_data.VAO);
-    glDrawElements(GL_TRIANGLES, (unsigned int) vector_size(primitive_sphere->meshes[0]->indices), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(model->meshes[0]->render_data.VAO);
+    glDrawElements(GL_TRIANGLES, (unsigned int) vector_size(model->meshes[0]->indices), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
-    set_uniform_vec4(model_renderer.shader, "solid_color", 0.0f, 0.0f, 0.0f, 0.0f);
-}
-
-static inline void draw_arrow(Transform transform, float scale, vec4 color) {
-    mat4 model;
-    transform_to_mat4(transform, model);
-
-    set_uniform_vec4(model_renderer.shader, "solid_color", color[0], color[1], color[2], color[3]);
-    set_uniform_mat4(model_renderer.shader, "model", model);
-
-    glBindVertexArray(primitive_cylinder->meshes[0]->render_data.VAO);
-    glDrawElements(GL_TRIANGLES, (unsigned int) vector_size(primitive_cylinder->meshes[0]->indices), GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-
-    set_uniform_vec4(model_renderer.shader, "solid_color", 0.0f, 0.0f, 0.0f, 0.0f);
+    set_uniform_vec4(model_renderer.gizmo_shader, "color", 0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 static inline void draw_mesh(Mesh *mesh) {
@@ -309,9 +298,9 @@ static inline void draw_model(Model *model) {
 void draw_object3d(Object3D *object3d) {
     assert(object3d != NULL);
 
-    mat4 model;
-    transform_to_mat4(object3d->transform, model);
-    set_uniform_mat4(model_renderer.shader, "model", model);
+    mat4 m = {};
+    transform_to_mat4(object3d->transform, m);
+    set_uniform_mat4(model_renderer.shader, "model", m);
 
     draw_model(object3d->model);
 }
@@ -354,30 +343,35 @@ void draw_world(World *world) {
     set_uniform_mat4(model_renderer.shader, "view", camera->view);
     set_uniform_mat4(model_renderer.shader, "projection", camera->projection);
 
-    /* Draw gizmos */
-    if (get_game_state() == GS_EDITOR) {
-        //glDisable(GL_DEPTH_TEST);
-        //glDepthMask(GL_FALSE);
-        Gizmo *gizmos = get_gizmos();
-        for (size_t i = 0; i < vector_size(gizmos); i++) {
-            switch (gizmos[i].type) {
-                case GT_SPHERE:
-                    draw_sphere(gizmos[i].transform, 1.0f, gizmos[i].color);
-                    break;
-                case GT_ARROW:
-                    draw_arrow(gizmos[i].transform, 1.0f, gizmos[i].color);
-                    break;
-            }
-        }
-        //glEnable(GL_DEPTH_TEST);
-        //glDepthMask(GL_TRUE);
-    }
-
     if (world->terrain != NULL)
         draw_terrain(world->terrain);
 
-    for (size_t i = 0; i < vector_size(world->objects3d); i++) {
+    for (size_t i = 0; i < vector_size(world->objects3d); i++)
         draw_object3d(world->objects3d[i]);
+
+    /* Draw gizmos */
+    if (get_game_state() == GS_EDITOR) {
+        use_shader(model_renderer.gizmo_shader);
+        set_uniform_mat4(model_renderer.gizmo_shader, "view", camera->view);
+        set_uniform_mat4(model_renderer.gizmo_shader, "projection", camera->projection);
+        glDepthFunc(GL_ALWAYS);
+        Gizmo *gizmos = get_gizmos();
+        /* Gizmos should have constant scale */
+        for (size_t i = 0; i < vector_size(gizmos); i++) {
+            float scale = transform_distance(camera->transform, gizmos[i].transform) * GIZMO_SCALE;
+            switch (gizmos[i].type) {
+                case GT_SPHERE:
+                    draw_gizmo(primitive_sphere, gizmos[i].transform, scale, gizmos[i].color);
+                    break;
+                case GT_ARROW:
+                    draw_gizmo(primitive_arrow, gizmos[i].transform, scale, gizmos[i].color);
+                    break;
+                case GT_CYLINDER:
+                    draw_gizmo(primitive_cylinder, gizmos[i].transform, scale, gizmos[i].color);
+                    break;
+            }
+        }
+        glDepthFunc(GL_LEQUAL);
     }
 
     finish_model_rendering();
@@ -457,7 +451,7 @@ void reset_opengl_settings() {
 
     //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-    glClearStencil(0);
+    //glClearStencil(0);
     glClearDepth(1.0f);
     glClearColor(0.3f, 0.2f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
