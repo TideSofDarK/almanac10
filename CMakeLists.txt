@@ -3,16 +3,25 @@ project(almanac10 C)
 
 set(CMAKE_C_STANDARD 11)
 
+if (UNIX)
+    set(UNIX_FLAGS "m; dl")
+endif (UNIX)
+
+# cglm
+set(CGLM_INCLUDE_DIR "" CACHE FILEPATH "sets cglm include path")
+include_directories(${CGLM_INCLUDE_DIR})
+
+# nuklear
+set(NUKLEAR_INCLUDE_DIR "" CACHE FILEPATH "sets nuklear include path")
+include_directories(${NUKLEAR_INCLUDE_DIR})
+
+# GLAD
+set(GLAD_INCLUDE_DIR "" CACHE FILEPATH "sets GLAD include path")
+include_directories(${GLAD_INCLUDE_DIR})
+
 find_package(assimp REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(lua REQUIRED)
-
-include_directories(
-        .
-        C:/workspace/libs/cglm/include
-        C:/workspace/libs/nuklear
-        C:/workspace/libs/glad/include
-)
 
 file(GLOB almanac10_src
         "engine/*.h"
@@ -24,6 +33,7 @@ target_link_libraries(almanac10
         assimp
         glfw
         lua
+        ${UNIX_FLAGS}
         )
 
 # Copy Lua scripts to assets directory
