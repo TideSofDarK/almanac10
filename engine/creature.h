@@ -2,10 +2,6 @@
 
 #include <cglm/cglm.h>
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
 #include "transform.h"
 #include "sprite.h"
 

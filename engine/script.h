@@ -1,9 +1,9 @@
 #pragma once
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-#include <assimp/types.h>
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+#include "assimp/types.h"
 
 #include "creature.h"
 

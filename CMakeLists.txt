@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5.1)
 project(almanac10 C)
 
 set(CMAKE_C_STANDARD 11)
 
 if (UNIX)
-    set(UNIX_FLAGS "m; dl")
+    set(UNIX_FLAGS "m;dl")
 endif (UNIX)
 
 # cglm
@@ -21,7 +21,7 @@ include_directories(${GLAD_INCLUDE_DIR})
 
 find_package(assimp REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(lua REQUIRED)
+find_package(Lua REQUIRED)
 
 file(GLOB almanac10_src
         "engine/*.h"
