@@ -21,7 +21,8 @@
 
 #define BTN_DEFAULT_EXIT GLFW_KEY_ESCAPE
 
-typedef enum {
+typedef enum
+{
     CT_LMB,
     CT_RMB,
 
@@ -45,7 +46,8 @@ typedef enum {
     CT_LAST
 } ControlType;
 
-typedef enum {
+typedef enum
+{
     BS_NONE,
     BS_PRESS,
     BS_PRESSED,

@@ -11,14 +11,16 @@
 /* Global state */
 static Texture **precached_textures = NULL;
 
-void construct_texture(const char *filename, Texture **_texture) {
+void construct_texture(const char *filename, Texture **_texture)
+{
     *_texture = malloc(sizeof(Texture));
     Texture *texture = *_texture;
 
     stbi_set_flip_vertically_on_load(1);
     unsigned char *data = stbi_load(filename, &texture->w, &texture->h, &texture->channels, 0);
 
-    if (data == NULL) {
+    if (data == NULL)
+    {
         free(texture);
         *_texture = NULL;
         return;
@@ -49,7 +51,8 @@ void construct_texture(const char *filename, Texture **_texture) {
     vector_push_back(precached_textures, texture);
 }
 
-void destruct_texture(Texture **_texture) {
+void destruct_texture(Texture **_texture)
+{
     Texture *texture = *_texture;
 
     printf("[Engine] Freeing texture: %s\n", texture->filename);
@@ -61,11 +64,14 @@ void destruct_texture(Texture **_texture) {
     *_texture = NULL;
 }
 
-int free_precached_textures() {
+int free_precached_textures()
+{
     int count = 0;
-    for (int i = 0; i < (int) vector_size(precached_textures); i++) {
+    for (int i = 0; i < (int)vector_size(precached_textures); i++)
+    {
         Texture *texture = precached_textures[i];
-        if (texture != NULL) {
+        if (texture != NULL)
+        {
             destruct_texture(&texture);
             count++;
         }
@@ -73,12 +79,15 @@ int free_precached_textures() {
     return count;
 }
 
-void free_precached_texture(Texture *texture) {
+void free_precached_texture(Texture *texture)
+{
     if (texture == NULL)
         return;
 
-    for (int i = 0; i < (int) vector_size(precached_textures); i++) {
-        if (strcmp(texture->filename, precached_textures[i]->filename) == 0) {
+    for (int i = 0; i < (int)vector_size(precached_textures); i++)
+    {
+        if (strcmp(texture->filename, precached_textures[i]->filename) == 0)
+        {
             destruct_texture(&texture);
 
             vector_erase(precached_textures, i);
@@ -89,9 +98,12 @@ void free_precached_texture(Texture *texture) {
 }
 
 /* TODO: maybe we should return it instead? */
-Texture *get_texture(const char *filename) {
-    for (int i = 0; i < (int) vector_size(precached_textures); i++) {
-        if (strcmp(precached_textures[i]->filename, filename) == 0) {
+Texture *get_texture(const char *filename)
+{
+    for (int i = 0; i < (int)vector_size(precached_textures); i++)
+    {
+        if (strcmp(precached_textures[i]->filename, filename) == 0)
+        {
             return precached_textures[i];
         }
     }

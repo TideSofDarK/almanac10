@@ -11,7 +11,8 @@ static FPS fps;
 /*
  * copyright (c) 2014 joseph werle <joseph.werle@gmail.com>
  */
-int asprintf(char **str, const char *fmt, ...) {
+int asprintf(char **str, const char *fmt, ...)
+{
     int size = 0;
     va_list args;
     va_start(args, fmt);
@@ -23,33 +24,47 @@ int asprintf(char **str, const char *fmt, ...) {
 /*
  * copyright (c) 2014 joseph werle <joseph.werle@gmail.com>
  */
-int vasprintf(char **str, const char *fmt, va_list args) {
+int vasprintf(char **str, const char *fmt, va_list args)
+{
     int size = 0;
     va_list tmpa;
     va_copy(tmpa, args);
     size = vsnprintf(NULL, size, fmt, tmpa);
     va_end(tmpa);
-    if (size < 0) { return -1; }
-    *str = (char *) malloc(size + 1);
-    if (NULL == *str) { return -1; }
+    if (size < 0)
+    {
+        return -1;
+    }
+    *str = (char *)malloc(size + 1);
+    if (NULL == *str)
+    {
+        return -1;
+    }
     size = vsprintf(*str, fmt, args);
     return size;
 }
 
-char *load_string_from_file(const char *filename) {
+char *load_string_from_file(const char *filename)
+{
     FILE *f = fopen(filename, "rb");
     char *buf = NULL;
-    if (!f) {
+    if (!f)
+    {
         fprintf(stderr, "Could not open text file: %s\n", filename);
         return NULL;
-    } else {
+    }
+    else
+    {
         fseek(f, 0, SEEK_END);
         unsigned int len = ftell(f);
-        buf = (char *) malloc(1 + len * sizeof(char));
+        buf = (char *)malloc(1 + len * sizeof(char));
         fseek(f, 0, SEEK_SET);
-        if (buf) {
+        if (buf)
+        {
             fread(buf, sizeof(char), len, f);
-        } else {
+        }
+        else
+        {
             fprintf(stderr, "Could not allocate memory for string\n");
             return NULL;
         }
@@ -58,35 +73,41 @@ char *load_string_from_file(const char *filename) {
     return buf;
 }
 
-char *vec3_to_string(vec3 v) {
+char *vec3_to_string(vec3 v)
+{
     char *buffer = NULL;
     asprintf(&buffer, "%f %f %f", v[0], v[1], v[2]);
 
     return buffer;
 }
 
-void update_fps(float time) {
+void update_fps(float time)
+{
     float current_frame = time;
     fps.delta_time = current_frame - fps.last_frame;
     fps.last_frame = current_frame;
 
-    if ((current_frame - fps.fps_counter) > 1.0 || fps.frames == 0) {
-        fps.fps = (float) fps.frames / (current_frame - fps.fps_counter);
+    if ((current_frame - fps.fps_counter) > 1.0 || fps.frames == 0)
+    {
+        fps.fps = (float)fps.frames / (current_frame - fps.fps_counter);
         fps.fps_counter = current_frame;
         fps.frames = 0;
     }
     fps.frames++;
 }
 
-float get_fps() {
+float get_fps()
+{
     return fps.fps;
 }
 
-float get_delta_time() {
+float get_delta_time()
+{
     return fps.delta_time;
 }
 
-bool intersect_ray_sphere(vec3 r_origin, vec3 r_end, vec3 s_origin, float r) {
+bool intersect_ray_sphere(vec3 r_origin, vec3 r_end, vec3 s_origin, float r)
+{
     float x1 = r_origin[0];
     float y1 = r_origin[1];
     float z1 = r_origin[2];
@@ -109,7 +130,8 @@ bool intersect_ray_sphere(vec3 r_origin, vec3 r_end, vec3 s_origin, float r) {
     return b * b - 4.0f * a * c >= 0.0f;
 }
 
-bool intersect_ray_cylinder(vec3 r_origin, vec3 r_end, vec3 c_origin, vec3 c_end, float c_r) {
+bool intersect_ray_cylinder(vec3 r_origin, vec3 r_end, vec3 c_origin, vec3 c_end, float c_r)
+{
     vec3 r_norm = {};
     glm_vec_sub(r_end, r_origin, r_norm);
     glm_normalize(r_norm);
@@ -119,10 +141,10 @@ bool intersect_ray_cylinder(vec3 r_origin, vec3 r_end, vec3 c_origin, vec3 c_end
     vec3 B = {};
     glm_vec_copy(c_end, B);
 
-//    Quat.rotateVec3(cap.rotation,A); //Apply Rotation first
-//    Quat.rotateVec3(cap.rotation,B);
-//    A.add(cap.position);	//Then Translation
-//    B.add(cap.position);
+    //    Quat.rotateVec3(cap.rotation,A); //Apply Rotation first
+    //    Quat.rotateVec3(cap.rotation,B);
+    //    A.add(cap.position);	//Then Translation
+    //    B.add(cap.position);
 
     vec3 AB = {};
     glm_vec_sub(B, A, AB);
@@ -139,16 +161,23 @@ bool intersect_ray_cylinder(vec3 r_origin, vec3 r_end, vec3 c_origin, vec3 c_end
     float c = glm_vec_dot(AOxAB, AOxAB) - (c_r * c_r * ab2);
     float d = b * b - 4.0f * a * c;
 
-    if (d < 0) { return false; }
+    if (d < 0)
+    {
+        return false;
+    }
 
     float t = (-b - sqrtf(d)) / (2.0f * a);
-    if (t < 0) {
+    if (t < 0)
+    {
         float aLen2 = glm_vec_distance(A, r_origin);
         float bLen2 = glm_vec_distance(B, r_origin);
 
-        if (aLen2 < bLen2) {
+        if (aLen2 < bLen2)
+        {
             //printf("t is parallel, test top cap\n");
-        } else {
+        }
+        else
+        {
             //printf("t is parallel, test bottom cap\n");
         }
 
@@ -168,9 +197,12 @@ bool intersect_ray_cylinder(vec3 r_origin, vec3 r_end, vec3 c_origin, vec3 c_end
     glm_vec_sub(intersection, A, intersection_length);
 
     float t_limit = glm_vec_dot(intersection_length, AB) / ab2;
-    if (t_limit >= 0 && t_limit <= 1) return true;
-    else if (t_limit < 0) return false;
-    else if (t_limit > 1) return false;
+    if (t_limit >= 0 && t_limit <= 1)
+        return true;
+    else if (t_limit < 0)
+        return false;
+    else if (t_limit > 1)
+        return false;
 
     return false;
 }

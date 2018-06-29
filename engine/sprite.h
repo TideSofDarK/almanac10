@@ -23,7 +23,8 @@
 /* 5 possible directions of each sheet */
 #define MAXANIM (((ANIM_ID(ANIM_CUSTOM2) + 1) * 5) - 1)
 
-typedef enum {
+typedef enum
+{
     ANIM_CAST1 = NOLOOP,
     ANIM_CAST2,
     ANIM_FLINCH,
@@ -36,7 +37,8 @@ typedef enum {
     ANIM_CUSTOM2
 } AnimationState;
 
-typedef enum {
+typedef enum
+{
     DIR_N,
     DIR_NE,
     DIR_E,
@@ -48,7 +50,8 @@ typedef enum {
 } Direction;
 
 /* Any renderable 2D entity */
-typedef struct {
+typedef struct
+{
     Texture *textures[MAXANIM];
     unsigned int w, h, sheet_position;
     AnimationState anim_state;

@@ -2,7 +2,8 @@
 
 #include <cglm/cglm.h>
 
-typedef struct {
+typedef struct
+{
     float delta_time;
     float last_frame;
     float fps_counter;

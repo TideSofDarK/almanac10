@@ -11,7 +11,8 @@
 
 #include "nuklear.h"
 
-typedef struct {
+typedef struct
+{
     int creature_under_cursor;
 } UIState;
 

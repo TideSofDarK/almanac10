@@ -2,7 +2,8 @@
 
 #include <cglm/cglm.h>
 
-typedef struct {
+typedef struct
+{
     vec3 pos;
     vec3 euler;
     vec3 scale;

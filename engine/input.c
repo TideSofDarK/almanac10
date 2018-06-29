@@ -12,8 +12,10 @@ unsigned int input_map[CT_LAST];
 int cx = 0, cy = 0;
 bool cursor_inside_window = false;
 
-void init_input() {
-    for (int i = 0; i < GLFW_KEY_LAST; i++) {
+void init_input()
+{
+    for (int i = 0; i < GLFW_KEY_LAST; i++)
+    {
         input[i] = BS_NONE;
     }
 
@@ -39,88 +41,106 @@ void init_input() {
     input_map[CT_EXIT] = BTN_DEFAULT_EXIT;
 }
 
-void update_input() {
+void update_input()
+{
     GLFWwindow *window = get_active_window();
     assert(window != NULL);
 
-    for (int i = 0; i < (int) CT_LAST; i++) {
+    for (int i = 0; i < (int)CT_LAST; i++)
+    {
         int press;
-        if (i == CT_LMB || i == CT_RMB) {
+        if (i == CT_LMB || i == CT_RMB)
+        {
             press = glfwGetMouseButton(window, input_map[i]) == GLFW_PRESS;
-        } else {
+        }
+        else
+        {
             press = glfwGetKey(window, input_map[i]) == GLFW_PRESS;
         }
-        if (press) {
-            if (input[input_map[i]] == BS_NONE) {
+        if (press)
+        {
+            if (input[input_map[i]] == BS_NONE)
+            {
                 input[input_map[i]] = BS_PRESSED;
-            } else {
+            }
+            else
+            {
                 input[input_map[i]] = BS_PRESS;
             }
-        } else if (input[input_map[i]] == BS_PRESS) {
+        }
+        else if (input[input_map[i]] == BS_PRESS)
+        {
             input[input_map[i]] = BS_RELEASED;
-        } else {
+        }
+        else
+        {
             input[input_map[i]] = BS_NONE;
         }
     }
 
     double dcx, dcy;
     glfwGetCursorPos(window, &dcx, &dcy);
-    cx = (int) dcx;
-    cy = (int) dcy;
+    cx = (int)dcx;
+    cy = (int)dcy;
 
     cursor_inside_window = (get_config().w > cx > 0) && (get_config().h > cy > 0);
 }
 
-ButtonState get_button_state(int btn) {
+ButtonState get_button_state(int btn)
+{
     return input[btn];
 }
 
-ButtonState get_control_state(ControlType btn) {
+ButtonState get_control_state(ControlType btn)
+{
     return get_button_state(input_map[btn]);
 }
 
-bool is_press_or_pressed(ControlType btn) {
+bool is_press_or_pressed(ControlType btn)
+{
     return get_control_state(btn) == BS_PRESS || is_pressed(btn);
 }
 
-bool is_pressed(ControlType btn) {
+bool is_pressed(ControlType btn)
+{
     return get_control_state(btn) == BS_PRESSED;
 }
 
-bool is_cursor_inside_window() {
+bool is_cursor_inside_window()
+{
     return cursor_inside_window;
 }
 
-void set_cursor_hidden(bool hidden) {
+void set_cursor_hidden(bool hidden)
+{
     glfwSetInputMode(get_active_window(), GLFW_CURSOR, hidden ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 }
 
-void cursor_position(float *_cx, float *_cy) {
-    *_cx = (float) cx;
-    *_cy = (float) cy;
+void cursor_position(float *_cx, float *_cy)
+{
+    *_cx = (float)cx;
+    *_cy = (float)cy;
 }
 
-void cursor_raycast_custom(Camera * camera, float fcx, float fcy, vec3 origin, vec3 direction)
+void cursor_raycast_custom(Camera *camera, float fcx, float fcy, vec3 origin, vec3 direction)
 {
-    float w = (float) get_config().w;
-    float h = (float) get_config().h;
+    float w = (float)get_config().w;
+    float h = (float)get_config().h;
 
     mat4 world_to_camera;
     glm_mat4_mul(camera->projection, camera->view, world_to_camera);
     glm_mat4_inv(world_to_camera, world_to_camera);
 
     vec4 ray_start_ndc = {
-            (fcx / w - 0.5f) * 2.0f,
-            (fcy / h - 0.5f) * -2.0f,
-            -1.0f,
-            1.0f
-    };
+        (fcx / w - 0.5f) * 2.0f,
+        (fcy / h - 0.5f) * -2.0f,
+        -1.0f,
+        1.0f};
     vec4 ray_end_ndc = {
-            (fcx / w - 0.5f) * 2.0f,
-            (fcy / h - 0.5f) * -2.0f,
-            0.0,
-            1.0f
-    };
+        (fcx / w - 0.5f) * 2.0f,
+        (fcy / h - 0.5f) * -2.0f,
+        0.0,
+        1.0f};
 
     vec4 ray_start_world;
     glm_mat4_mulv(world_to_camera, ray_start_ndc, ray_start_world);
@@ -138,7 +158,8 @@ void cursor_raycast_custom(Camera * camera, float fcx, float fcy, vec3 origin, v
     glm_vec3(ray_start_world, origin);
 }
 
-void cursor_raycast(Camera *camera, vec3 origin, vec3 direction) {
+void cursor_raycast(Camera *camera, vec3 origin, vec3 direction)
+{
     float fcx, fcy;
     cursor_position(&fcx, &fcy);
 

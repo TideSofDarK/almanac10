@@ -9,7 +9,8 @@
 #include "mesh.h"
 #include "transform.h"
 
-typedef struct {
+typedef struct
+{
     Transform transform;
     RenderData render_data;
     Vertex *vertices;

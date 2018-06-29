@@ -9,44 +9,49 @@
 
 /* Macros to clean up a vector using custom deconstruct function */
 /* TODO: Possible refactoring */
-#define remove_entities(world, to_remove, things, func, all)        \
-do {                                                                \
-    if (all == true)                                                \
-    {                                                               \
-        for (size_t i = 0; i < vector_size(world->things); ++i)     \
-        {                                                           \
-            func(&world->things[i], world);                         \
-        }                                                           \
-        vector_free(world->things);                                 \
-        world->things = NULL;                                       \
-    }                                                               \
-    else                                                            \
-    {                                                               \
-        for (size_t i = 0; i < vector_size(world->to_remove); ++i)  \
-        {                                                           \
-            int index_to_remove = world->to_remove[i];              \
-            func(&world->things[index_to_remove], world);           \
-            vector_erase(world->things, index_to_remove);           \
-        }                                                           \
-    }                                                               \
-    vector_free(world->to_remove);                                  \
-    world->to_remove = NULL;                                        \
-} while(0);
+#define remove_entities(world, to_remove, things, func, all)           \
+    do                                                                 \
+    {                                                                  \
+        if (all == true)                                               \
+        {                                                              \
+            for (size_t i = 0; i < vector_size(world->things); ++i)    \
+            {                                                          \
+                func(&world->things[i], world);                        \
+            }                                                          \
+            vector_free(world->things);                                \
+            world->things = NULL;                                      \
+        }                                                              \
+        else                                                           \
+        {                                                              \
+            for (size_t i = 0; i < vector_size(world->to_remove); ++i) \
+            {                                                          \
+                int index_to_remove = world->to_remove[i];             \
+                func(&world->things[index_to_remove], world);          \
+                vector_erase(world->things, index_to_remove);          \
+            }                                                          \
+        }                                                              \
+        vector_free(world->to_remove);                                 \
+        world->to_remove = NULL;                                       \
+    } while (0);
 
-static inline void destruct_world_projectile(Projectile **_projectile, World *world) {
+static inline void destruct_world_projectile(Projectile **_projectile, World *world)
+{
     destruct_projectile(_projectile);
 }
 
-static inline void destruct_world_creature(Creature **_creature, World *world) {
+static inline void destruct_world_creature(Creature **_creature, World *world)
+{
     script_destroy_creature(world->L, *_creature);
     destruct_creature(_creature);
 }
 
-static inline void destruct_world_object3d(Object3D **_object3d, World *world) {
+static inline void destruct_world_object3d(Object3D **_object3d, World *world)
+{
     destruct_object3d(_object3d);
 }
 
-void construct_world(World **_world, const char *name) {
+void construct_world(World **_world, const char *name)
+{
     *_world = malloc(sizeof(World));
     World *world = *_world;
 
@@ -66,7 +71,8 @@ void construct_world(World **_world, const char *name) {
     construct_world_lua_state(&world->L);
 }
 
-void destruct_world(World **_world) {
+void destruct_world(World **_world)
+{
     World *world = *_world;
 
     remove_entities(world, projectiles_to_remove, projectiles, destruct_world_projectile, 1);
@@ -85,16 +91,19 @@ void destruct_world(World **_world) {
     *_world = NULL;
 }
 
-void insert_object3d(World *world, Object3D *object3d) {
+void insert_object3d(World *world, Object3D *object3d)
+{
     vector_push_back(world->objects3d, object3d);
 }
 
-void insert_projectile(World *world, Projectile *projectile) {
+void insert_projectile(World *world, Projectile *projectile)
+{
     vector_push_back(world->projectiles, projectile);
 }
 
 /* TODO: maybe we should move this code somewhere else and leave only insert_creature thingy */
-Creature *spawn_creature(World *world, const char *name, vec3 pos) {
+Creature *spawn_creature(World *world, const char *name, vec3 pos)
+{
     Creature *creature = NULL;
     construct_creature(&creature, get_precached_creature_data(name), pos);
     creature->index = script_spawn_creature(world->L, creature);
@@ -104,7 +113,8 @@ Creature *spawn_creature(World *world, const char *name, vec3 pos) {
     return creature;
 }
 
-void update_world(World *world) {
+void update_world(World *world)
+{
     /* Clean up things using macro */
     remove_entities(world, projectiles_to_remove, projectiles, destruct_world_projectile, 0);
     remove_entities(world, creatures_to_remove, creatures, destruct_world_creature, 0);
@@ -112,34 +122,45 @@ void update_world(World *world) {
 
     update_camera(get_active_camera());
 
-    if (get_game_state() != GS_EDITOR) {
+    if (get_game_state() != GS_EDITOR)
+    {
         /* Determine cursor target */
         float cx, cy;
         cursor_position(&cx, &cy);
-        set_creature_under_cursor(get_sprite_under_cursor(world, (int) cx, (int) cy));
+        set_creature_under_cursor(get_sprite_under_cursor(world, (int)cx, (int)cy));
 
         /* Update projectiles */
-        if (world->projectiles != NULL && !vector_empty(world->projectiles)) {
-            for (size_t i = 0; i < vector_size(world->projectiles); ++i) {
+        if (world->projectiles != NULL && !vector_empty(world->projectiles))
+        {
+            for (size_t i = 0; i < vector_size(world->projectiles); ++i)
+            {
                 Projectile *projectile = world->projectiles[i];
-                if (projectile != NULL) {
+                if (projectile != NULL)
+                {
                     update_projectile(projectile);
 
-                    if (projectile->dead) {
+                    if (projectile->dead)
+                    {
                         if (projectile->sprite->animation_finished)
-                            vector_push_back(world->projectiles_to_remove, (unsigned int) i);
-                    } else {
+                            vector_push_back(world->projectiles_to_remove, (unsigned int)i);
+                    }
+                    else
+                    {
                         /* TODO: proper collision checking/whatever */
-                        if (projectile->transform.pos[1] <= 0.0f) {
+                        if (projectile->transform.pos[1] <= 0.0f)
+                        {
                             kill_projectile(projectile);
                             continue;
                         }
 
-                        for (size_t c = 0; c < vector_size(world->creatures); ++c) {
+                        for (size_t c = 0; c < vector_size(world->creatures); ++c)
+                        {
                             Creature *creature = world->creatures[c];
-                            if (creature != NULL) {
+                            if (creature != NULL)
+                            {
                                 if (!creature->dead && transform_distance(projectile->transform, creature->transform) <=
-                                                       projectile->radius) {
+                                                           projectile->radius)
+                                {
                                     kill_projectile(projectile);
                                     creature->health = 0;
                                     break;
@@ -152,14 +173,20 @@ void update_world(World *world) {
         }
 
         /* Update creatures */
-        if (world->creatures != NULL && !vector_empty(world->creatures)) {
-            for (size_t i = 0; i < vector_size(world->creatures); ++i) {
+        if (world->creatures != NULL && !vector_empty(world->creatures))
+        {
+            for (size_t i = 0; i < vector_size(world->creatures); ++i)
+            {
                 Creature *creature = world->creatures[i];
-                if (creature != NULL) {
-                    if (!creature->dead && creature->health <= 0) {
+                if (creature != NULL)
+                {
+                    if (!creature->dead && creature->health <= 0)
+                    {
                         kill_creature(creature);
                         script_kill_creature(world->L, creature);
-                    } else {
+                    }
+                    else
+                    {
                         update_creature(creature);
                         script_update_creature(world->L, creature);
                     }
@@ -175,7 +202,8 @@ void update_world(World *world) {
         update_player(player);
 
         /* Projectile test */
-        if (get_control_state(CT_ATTACK) == BS_PRESSED) {
+        if (get_control_state(CT_ATTACK) == BS_PRESSED)
+        {
             Sprite *explosion = NULL;
             sprite_particle(&explosion, "explosion", 64, 64);
 

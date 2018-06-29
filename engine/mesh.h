@@ -7,13 +7,15 @@
 #include "texture.h"
 #include "shader.h"
 
-typedef struct {
+typedef struct
+{
     vec3 pos;
     vec3 normal;
     vec2 tex_coords;
 } Vertex;
 
-typedef struct {
+typedef struct
+{
     RenderData render_data;
     Vertex *vertices;
     int *indices;

@@ -2,7 +2,8 @@
 
 #include "transform.h"
 
-typedef struct {
+typedef struct
+{
     Transform transform;
     mat4 view;
     mat4 projection;

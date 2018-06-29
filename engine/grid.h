@@ -3,7 +3,8 @@
 #include "shader.h"
 #include "world.h"
 
-typedef struct {
+typedef struct
+{
     mat4 model;
     Shader *shader;
     unsigned int VBO, VAO;

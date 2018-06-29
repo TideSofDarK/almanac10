@@ -2,7 +2,8 @@
 
 #include <cglm/cglm.h>
 
-typedef struct {
+typedef struct
+{
     unsigned int ID;
     char *vertex_shader_source;
     char *fragment_shader_source;

@@ -2,13 +2,15 @@
 
 #include <cglm/cglm.h>
 
-typedef struct {
+typedef struct
+{
     vec3 a;
     vec3 b;
     vec3 d;
 } PRay;
 
-typedef struct {
+typedef struct
+{
     vec3 a;
     vec3 b;
     float r;

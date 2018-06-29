@@ -36,6 +36,12 @@ target_link_libraries(almanac10
         ${UNIX_FLAGS}
         )
 
+# Copy assets folder
+set(ASSETS_DIR "" CACHE FILEPATH "sets assets path")
+add_custom_command(TARGET almanac10 PRE_LINK
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${ASSETS_DIR}/ $<TARGET_FILE_DIR:almanac10>/assets/)
+
 # Copy Lua scripts to assets directory
 add_custom_command(TARGET almanac10 PRE_LINK
         COMMAND ${CMAKE_COMMAND} -E copy_directory

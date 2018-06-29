@@ -12,7 +12,8 @@
 #include "object.h"
 #include "terrain.h"
 
-typedef struct {
+typedef struct
+{
     char *name;
 
     Projectile **projectiles;

@@ -10,32 +10,50 @@
 #include "nuklear.h"
 
 #include "camera.h"
+#include "world.h"
 
 #define GIZMO_SCALE 0.15f
 
-typedef enum {
+typedef enum
+{
     EM_TERRAIN,
     EM_PROPS,
     EM_CREATURES
 } EditorMode;
 
-typedef enum {
+typedef enum
+{
     GT_SPHERE,
     GT_ARROW,
     GT_CYLINDER
 } GizmoType;
 
-typedef struct Gizmo {
+typedef struct Gizmo
+{
     Transform transform;
     void *value;
     vec4 color;
     GizmoType type;
 } Gizmo;
 
-typedef struct {
-    Gizmo * gizmo;
-    vec3 offset;
-} Drag;
+typedef struct
+{
+    Gizmo *gizmos;
+    Gizmo *axis_gizmos;
+
+    int selected_gizmo;
+    struct Drag
+    {
+        Gizmo *gizmo;
+        vec3 offset;
+        int axis;
+    } drag;
+
+    EditorMode editor_mode;
+
+    World *world;
+    World *previous_world;
+} Editor;
 
 void init_editor();
 
@@ -49,4 +67,4 @@ void toggle_editor();
 
 void editor_navigation(Camera *);
 
-Gizmo *get_gizmos();
+Editor *get_editor();

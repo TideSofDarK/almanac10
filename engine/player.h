@@ -3,7 +3,8 @@
 #include "party.h"
 #include "camera.h"
 
-typedef struct {
+typedef struct
+{
     Party party;
 } Player;
 

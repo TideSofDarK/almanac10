@@ -2,7 +2,8 @@
 
 #include <glad/glad.h>
 
-void construct_mesh(Vertex *vertices, int *indices, Texture *texture, Mesh **_mesh) {
+void construct_mesh(Vertex *vertices, int *indices, Texture *texture, Mesh **_mesh)
+{
     *_mesh = malloc(sizeof(Mesh));
     Mesh *mesh = *_mesh;
 
@@ -23,18 +24,19 @@ void construct_mesh(Vertex *vertices, int *indices, Texture *texture, Mesh **_me
                  GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, normal));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal));
 
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, tex_coords));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, tex_coords));
 
     glBindVertexArray(0);
 }
 
-void destruct_mesh(Mesh **_mesh) {
+void destruct_mesh(Mesh **_mesh)
+{
     Mesh *mesh = *_mesh;
 
     vector_free(mesh->vertices);

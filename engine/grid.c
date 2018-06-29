@@ -10,7 +10,8 @@ const unsigned int GRID_SIZE = 20;
 
 Grid grid;
 
-void construct_grid() {
+void construct_grid()
+{
     construct_shader(&grid.shader, "grid.vert", "grid.frag", NULL);
 
     glm_mat4_copy(GLM_MAT4_IDENTITY, grid.model);
@@ -35,15 +36,18 @@ void construct_grid() {
     glBindVertexArray(0);
 }
 
-void destruct_grid() {
+void destruct_grid()
+{
     destruct_shader(&grid.shader);
 }
 
-int is_grid_constructed() {
+int is_grid_constructed()
+{
     return grid.VBO > 0;
 }
 
-void draw_grid() {
+void draw_grid()
+{
     Camera *camera = get_active_camera();
     if (camera == NULL)
         return;
@@ -57,8 +61,10 @@ void draw_grid() {
     set_uniform_mat4(grid.shader, "projection", camera->projection);
 
     glLineWidth(0.5f);
-    for (unsigned int x = 0; x < GRID_SIZE; x++) {
-        for (unsigned int z = 0; z < GRID_SIZE; z++) {
+    for (unsigned int x = 0; x < GRID_SIZE; x++)
+    {
+        for (unsigned int z = 0; z < GRID_SIZE; z++)
+        {
             mat4 model;
             glm_mat4_copy(grid.model, model);
             glm_translate_x(model, 0.5f * x);

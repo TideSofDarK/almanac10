@@ -4,7 +4,8 @@
 #include "game.h"
 #include "util.h"
 
-void debug_world(struct nk_context *ctx) {
+void debug_world(struct nk_context *ctx)
+{
     World *world = get_active_world();
     Camera *camera = get_active_camera();
     if (world == NULL || camera == NULL)
@@ -16,12 +17,14 @@ void debug_world(struct nk_context *ctx) {
     int y_offset = 10;
     int start_x = 50;
     int start_y = 50;
-    if (nk_begin(ctx, "World Debug", nk_rect((float) start_x, (float) start_y, (float) w, (float) h),
-                 NK_WINDOW_BORDER | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE)) {
+    if (nk_begin(ctx, "World Debug", nk_rect((float)start_x, (float)start_y, (float)w, (float)h),
+                 NK_WINDOW_BORDER | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE))
+    {
         /* Player, camera info */
         nk_layout_row_dynamic(ctx, 90, 1);
         if (nk_group_begin(ctx, "Player/Camera",
-                           NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_DYNAMIC)) {
+                           NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_DYNAMIC))
+        {
             char *b = vec3_to_string(camera->transform.pos);
             nk_layout_row_dynamic(ctx, font_size, 1);
             nk_label(ctx, b, NK_TEXT_LEFT);
@@ -38,10 +41,13 @@ void debug_world(struct nk_context *ctx) {
         /* World list */
         nk_layout_row_dynamic(ctx, 150, 1);
         if (nk_group_begin(ctx, "Worlds",
-                           NK_WINDOW_BORDER | NK_WINDOW_TITLE)) {
+                           NK_WINDOW_BORDER | NK_WINDOW_TITLE))
+        {
             World **worlds = get_all_worlds();
-            for (int i = 0; i < vector_size(worlds); i++) {
-                if (worlds[i] != NULL) {
+            for (int i = 0; i < vector_size(worlds); i++)
+            {
+                if (worlds[i] != NULL)
+                {
                     char buf[BUFSIZ];
                     snprintf(buf, sizeof(buf), "%d", i);
 
@@ -51,7 +57,8 @@ void debug_world(struct nk_context *ctx) {
                     nk_layout_row_push(ctx, 0.65f);
                     nk_label(ctx, worlds[i]->name, NK_TEXT_ALIGN_LEFT);
                     nk_layout_row_push(ctx, 0.25f);
-                    if (nk_button_label(ctx, worlds[i] == world ? "active" : "switch")) {
+                    if (nk_button_label(ctx, worlds[i] == world ? "active" : "switch"))
+                    {
                         make_world_active(worlds[i]);
                     }
                     //nk_layout_row_push(ctx, 0.3f);
@@ -67,10 +74,13 @@ void debug_world(struct nk_context *ctx) {
         /* Creature list */
         nk_layout_row_dynamic(ctx, 150, 1);
         if (nk_group_begin(ctx, "Creatures",
-                           NK_WINDOW_BORDER | NK_WINDOW_TITLE)) {
-            for (int i = 0; i < vector_size(world->creatures); i++) {
+                           NK_WINDOW_BORDER | NK_WINDOW_TITLE))
+        {
+            for (int i = 0; i < vector_size(world->creatures); i++)
+            {
                 Creature *creature = world->creatures[i];
-                if (creature != NULL) {
+                if (creature != NULL)
+                {
                     char buf[BUFSIZ];
                     snprintf(buf, sizeof(buf), "%d", i);
 
@@ -80,7 +90,8 @@ void debug_world(struct nk_context *ctx) {
                     nk_layout_row_push(ctx, 0.7f);
                     nk_label(ctx, creature->name, NK_TEXT_ALIGN_LEFT);
                     nk_layout_row_push(ctx, 0.2f);
-                    if (nk_button_label(ctx, "remove")) {
+                    if (nk_button_label(ctx, "remove"))
+                    {
                         vector_push_back(world->creatures_to_remove, i);
                     }
                     nk_layout_row_end(ctx);

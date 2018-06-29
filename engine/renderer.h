@@ -13,12 +13,14 @@
 #define SPRITE_RENDERER_SCALE 1.0f
 #define MODEL_RENDERER_SCALE 1.0f
 
-typedef struct {
+typedef struct
+{
     unsigned int texture_id, depth_id, FBO;
     float scale;
 } FrameBufferRenderData;
 
-typedef struct {
+typedef struct
+{
     RenderData render_data;
     FrameBufferRenderData fb_render_data;
     Shader *shader;
@@ -26,7 +28,8 @@ typedef struct {
     Shader *render_texture_shader;
 } ModelRenderer;
 
-typedef struct {
+typedef struct
+{
     RenderData render_data[2];
     SpriteOriginMode mode;
     FrameBufferRenderData fb_render_data;
@@ -62,4 +65,3 @@ void finish_sprite_rendering();
 void display_everything();
 
 void reset_opengl_settings();
-

@@ -4,7 +4,8 @@
 #include "model.h"
 
 /* Clickable wells, houses, etc... */
-typedef struct {
+typedef struct
+{
     Transform transform;
     Model *model;
 

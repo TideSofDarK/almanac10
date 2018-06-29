@@ -7,7 +7,8 @@
 #define PROJ_DEFAULT_LIFETIME 1.0f
 #define PROJ_DEFAULT_SPEED 15.0f
 
-typedef struct {
+typedef struct
+{
     Transform transform;
     vec3 origin;
     vec3 direction;

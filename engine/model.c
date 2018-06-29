@@ -11,39 +11,50 @@
 /* TODO: Asset precache manager */
 static Model **precached_models = NULL;
 
-void process_mesh(const char *folder, const aiScene *ai_scene, aiMesh *ai_mesh, Mesh **_mesh) {
+void process_mesh(const char *folder, const aiScene *ai_scene, aiMesh *ai_mesh, Mesh **_mesh)
+{
     /* Vertices, normals, texcoords, indices */
     Vertex *vertices = NULL;
     int *indices = NULL;
-    for (unsigned int i = 0; i < ai_mesh->mNumVertices; i++) {
+    for (unsigned int i = 0; i < ai_mesh->mNumVertices; i++)
+    {
         Vertex vertex;
 
-        glm_vec_copy((vec3) {ai_mesh->mVertices[i].x, ai_mesh->mVertices[i].y, ai_mesh->mVertices[i].z}, vertex.pos);
+        glm_vec_copy((vec3){ai_mesh->mVertices[i].x, ai_mesh->mVertices[i].y, ai_mesh->mVertices[i].z}, vertex.pos);
 
-        if (ai_mesh->mNormals && ai_mesh->mNormals[i].x) {
-            glm_vec_copy((vec3) {ai_mesh->mNormals[i].x, ai_mesh->mNormals[i].y, ai_mesh->mNormals[i].z},
+        if (ai_mesh->mNormals && ai_mesh->mNormals[i].x)
+        {
+            glm_vec_copy((vec3){ai_mesh->mNormals[i].x, ai_mesh->mNormals[i].y, ai_mesh->mNormals[i].z},
                          vertex.normal);
-        } else {
+        }
+        else
+        {
             glm_vec_zero(vertex.normal);
         }
 
-        if (ai_mesh->mTextureCoords[0]) {
-            glm_vec_copy((vec2) {ai_mesh->mTextureCoords[0][i].x, ai_mesh->mTextureCoords[0][i].y}, vertex.tex_coords);
-        } else {
-            glm_vec_copy((vec2) {0.0f, 0.0f}, vertex.tex_coords);
+        if (ai_mesh->mTextureCoords[0])
+        {
+            glm_vec_copy((vec2){ai_mesh->mTextureCoords[0][i].x, ai_mesh->mTextureCoords[0][i].y}, vertex.tex_coords);
+        }
+        else
+        {
+            glm_vec_copy((vec2){0.0f, 0.0f}, vertex.tex_coords);
         }
 
         vector_push_back(vertices, vertex);
     }
-    for (unsigned int i = 0; i < ai_mesh->mNumFaces; i++) {
+    for (unsigned int i = 0; i < ai_mesh->mNumFaces; i++)
+    {
         aiFace face = ai_mesh->mFaces[i];
-        for (unsigned int j = 0; j < face.mNumIndices; j++) {
+        for (unsigned int j = 0; j < face.mNumIndices; j++)
+        {
             vector_push_back(indices, face.mIndices[j]);
         }
     }
 
     aiString str;
-    if (ai_mesh->mMaterialIndex >= 0) {
+    if (ai_mesh->mMaterialIndex >= 0)
+    {
         aiMaterial *material = ai_scene->mMaterials[ai_mesh->mMaterialIndex];
         aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &str, NULL, NULL, NULL, NULL, NULL, NULL);
     }
@@ -56,19 +67,23 @@ void process_mesh(const char *folder, const aiScene *ai_scene, aiMesh *ai_mesh, 
     free(texture_path);
 }
 
-void process_node(const char *folder, Model *model, aiNode *node, const aiScene *scene) {
-    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+void process_node(const char *folder, Model *model, aiNode *node, const aiScene *scene)
+{
+    for (unsigned int i = 0; i < node->mNumMeshes; i++)
+    {
         Mesh *mesh = NULL;
         process_mesh(folder, scene, scene->mMeshes[node->mMeshes[i]], &mesh);
         vector_push_back(model->meshes, mesh);
     }
 
-    for (unsigned int i = 0; i < node->mNumChildren; i++) {
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
         process_node(folder, model, node->mChildren[i], scene);
     }
 }
 
-static inline void construct_model(Model **_model, const char *folder, const char *name) {
+static inline void construct_model(Model **_model, const char *folder, const char *name)
+{
     *_model = malloc(sizeof(Model));
     Model *model = *_model;
 
@@ -88,7 +103,8 @@ static inline void construct_model(Model **_model, const char *folder, const cha
     free(obj_path);
 }
 
-static inline void destruct_model(Model **_model) {
+static inline void destruct_model(Model **_model)
+{
     Model *model = *_model;
 
     printf("[Engine] Freeing model: %s\n", model->name);
@@ -102,11 +118,14 @@ static inline void destruct_model(Model **_model) {
     *_model = NULL;
 }
 
-int free_precached_models() {
+int free_precached_models()
+{
     int count = 0;
-    for (int i = 0; i < (int) vector_size(precached_models); i++) {
+    for (int i = 0; i < (int)vector_size(precached_models); i++)
+    {
         Model *model = precached_models[i];
-        if (model != NULL) {
+        if (model != NULL)
+        {
             destruct_model(&model);
             count++;
         }
@@ -114,12 +133,15 @@ int free_precached_models() {
     return count;
 }
 
-void free_precached_model(Model *model) {
+void free_precached_model(Model *model)
+{
     if (model == NULL)
         return;
 
-    for (int i = 0; i < (int) vector_size(precached_models); i++) {
-        if (strcmp(model->name, precached_models[i]->name) == 0) {
+    for (int i = 0; i < (int)vector_size(precached_models); i++)
+    {
+        if (strcmp(model->name, precached_models[i]->name) == 0)
+        {
             destruct_model(&model);
 
             vector_erase(precached_models, i);
@@ -129,12 +151,15 @@ void free_precached_model(Model *model) {
     }
 }
 
-Model *get_model(const char *folder, const char *name) {
+Model *get_model(const char *folder, const char *name)
+{
     Model *model = NULL;
 
     /* TODO: Respect folder name */
-    for (size_t i = 0; i < vector_size(precached_models); ++i) {
-        if (strcmp(precached_models[i]->name, name) == 0) {
+    for (size_t i = 0; i < vector_size(precached_models); ++i)
+    {
+        if (strcmp(precached_models[i]->name, name) == 0)
+        {
             return precached_models[i];
         }
     }
@@ -144,7 +169,8 @@ Model *get_model(const char *folder, const char *name) {
     return model;
 }
 
-Model *get_prop_model(const char *name) {
+Model *get_prop_model(const char *name)
+{
     Model *model = NULL;
     char *folder = NULL;
     asprintf(&folder, PROPS_PATH, name);

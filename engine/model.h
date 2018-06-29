@@ -16,7 +16,8 @@ TYPEDEF(aiString)
 typedef enum aiTextureType aiTextureType;
 #undef TYPEDEF
 
-typedef struct {
+typedef struct
+{
     Mesh **meshes;
     const char *name;
 } Model;

@@ -2,7 +2,8 @@
 
 #include <stdbool.h>
 
-typedef struct {
+typedef struct
+{
     unsigned int ID;
     int w, h, channels;
     char *filename;

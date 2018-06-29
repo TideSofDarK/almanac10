@@ -1,12 +1,14 @@
 #pragma once
 
-typedef enum {
-    OM_CENTER,    /* particles and projectiles */
-    OM_BOTTOM,    /* mostly for creatures */
+typedef enum
+{
+    OM_CENTER, /* particles and projectiles */
+    OM_BOTTOM, /* mostly for creatures */
     OM_LAST
 } SpriteOriginMode;
 
-typedef struct {
+typedef struct
+{
     unsigned int VBO, VAO, EBO;
 } RenderData;
 

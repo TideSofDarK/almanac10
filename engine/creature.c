@@ -8,19 +8,23 @@
 
 static CreatureData *precached_creatures = NULL;
 
-int precache_creature(const char *script_name) {
+int precache_creature(const char *script_name)
+{
     /* TODO: actually precache stuff */
     vector_push_back(precached_creatures, parse_lua_creature(script_name));
 
-    return (int) vector_size(precached_creatures) - 1;
+    return (int)vector_size(precached_creatures) - 1;
 }
 
-CreatureData const *get_precached_creature_data(const char *name) {
+CreatureData const *get_precached_creature_data(const char *name)
+{
     char *script_name = NULL;
     asprintf(&script_name, "c_%s", name);
 
-    for (size_t i = 0; i < vector_size(precached_creatures); i++) {
-        if (strcmp(script_name, precached_creatures[i].script_name) == 0) {
+    for (size_t i = 0; i < vector_size(precached_creatures); i++)
+    {
+        if (strcmp(script_name, precached_creatures[i].script_name) == 0)
+        {
             return &precached_creatures[i];
         }
     }
@@ -29,8 +33,10 @@ CreatureData const *get_precached_creature_data(const char *name) {
     return &precached_creatures[index];
 }
 
-void free_precached_creatures() {
-    for (size_t i = 0; i < vector_size(precached_creatures); i++) {
+void free_precached_creatures()
+{
+    for (size_t i = 0; i < vector_size(precached_creatures); i++)
+    {
         free(precached_creatures[i].script_name);
         free(precached_creatures[i].name);
         free(precached_creatures[i].sprite_sheet_folder);
@@ -39,7 +45,8 @@ void free_precached_creatures() {
     vector_free(precached_creatures);
 }
 
-void construct_creature(Creature **_creature, CreatureData const *creature_data, vec3 pos) {
+void construct_creature(Creature **_creature, CreatureData const *creature_data, vec3 pos)
+{
     *_creature = malloc(sizeof(Creature));
     Creature *creature = *_creature;
 
@@ -64,7 +71,8 @@ void construct_creature(Creature **_creature, CreatureData const *creature_data,
     creature->dead = 0;
 }
 
-void destruct_creature(Creature **_creature) {
+void destruct_creature(Creature **_creature)
+{
     Creature *creature = *_creature;
 
     destruct_sprite(&creature->sprite);
@@ -73,7 +81,8 @@ void destruct_creature(Creature **_creature) {
     *_creature = NULL;
 }
 
-void reset_creature_stats(Creature *creature) {
+void reset_creature_stats(Creature *creature)
+{
     assert(creature->data != NULL);
     creature->name = creature->data->name;
     creature->health = creature->max_health = creature->data->health;
@@ -84,52 +93,61 @@ void reset_creature_stats(Creature *creature) {
     creature->movement_capability = creature->data->movement_capability;
 }
 
-void kill_creature(Creature *creature) {
+void kill_creature(Creature *creature)
+{
     creature->dead = 1;
     creature->ai_state = AISTATE_NONE;
 
     play_sprite_animation(creature->sprite, ANIM_DEATH);
 }
 
-void update_creature(Creature *creature) {
+void update_creature(Creature *creature)
+{
     /* TODO: Correct animation playback conditions */
     /* TODO: Delta time usage */
-    if (!creature->dead && creature->ai_state == AISTATE_ROAM && creature->movement_capability != MOVCAP_NONE) {
-        if (creature->roam_clock < 0) {
+    if (!creature->dead && creature->ai_state == AISTATE_ROAM && creature->movement_capability != MOVCAP_NONE)
+    {
+        if (creature->roam_clock < 0)
+        {
             /* Find new roam position */
             float max_distance = 1.75f;
             float min_distance = 0.5f;
             vec3 pos = {};
-            do {
-                float distance = min_distance + ((float) rand() / (RAND_MAX / (max_distance - min_distance)));
-                float angle = (float) rand() / (float) (RAND_MAX / (M_PI * 2));
+            do
+            {
+                float distance = min_distance + ((float)rand() / (RAND_MAX / (max_distance - min_distance)));
+                float angle = (float)rand() / (float)(RAND_MAX / (M_PI * 2));
 
                 /* TODO: don't forget about y! */
                 float x = distance * cosf(angle);
                 float y = creature->movement_capability == MOVCAP_FLY ? cosf(angle) / 2.0f : 0.0f;
                 float z = distance * sinf(angle);
 
-                glm_vec_add((vec3) {x, y, z}, creature->start_pos, pos);
+                glm_vec_add((vec3){x, y, z}, creature->start_pos, pos);
             } while (glm_vec_distance(pos, creature->start_pos) >= max_distance);
 
             glm_vec_copy(creature->transform.pos, creature->roam_start_pos);
             glm_vec_add(creature->start_pos, pos, creature->roam_pos);
 
             creature->roam_clock = clock();
-        } else {
-            float roam_time = (float) (clock() - creature->roam_clock) / CLOCKS_PER_SEC;
+        }
+        else
+        {
+            float roam_time = (float)(clock() - creature->roam_clock) / CLOCKS_PER_SEC;
             float normalized = (roam_time * 0.8f) / glm_vec_distance(creature->roam_start_pos, creature->roam_pos);
 
             if (normalized >= 1.0f) /* We're done; go look for new roaming position */
             {
                 creature->roam_clock = -1;
-            } else {
+            }
+            else
+            {
                 vec3 t;
                 glm_vec_sub(creature->roam_pos, creature->transform.pos, t);
 
-                glm_vec3((vec3) {
-                        fmodf(360.0f - (glm_deg((atan2f(t[0], t[2]))) + 180.0f), 360.0f), 0, 0
-                }, creature->transform.euler);
+                glm_vec3((vec3){
+                             fmodf(360.0f - (glm_deg((atan2f(t[0], t[2]))) + 180.0f), 360.0f), 0, 0},
+                         creature->transform.euler);
 
                 glm_vec_lerp(creature->roam_start_pos, creature->roam_pos, normalized, creature->transform.pos);
             }

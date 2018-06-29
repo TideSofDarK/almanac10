@@ -23,6 +23,7 @@
 # CMake
 cmake-build-debug/
 cmake-build-release/
+build/
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
@@ -54,3 +55,7 @@ fabric.properties
 # Windows trash
 *.res
 *.aps
+
+.vs/
+.vscode/
+*.code-workspace

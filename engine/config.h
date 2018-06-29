@@ -1,6 +1,7 @@
 #pragma once
 
-typedef struct {
+typedef struct
+{
     unsigned int w, h;
     float fov;
 } Config;
