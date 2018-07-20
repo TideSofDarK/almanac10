@@ -37,6 +37,7 @@ void init_input()
     input_map[CT_ATTACK] = BTN_DEFAULT_ATTACK;
 
     input_map[CT_EDITOR] = BTN_DEFAULT_EDITOR;
+    input_map[CT_LEFT_SHIFT] = BTN_DEFAULT_LEFT_SHIFT;
 
     input_map[CT_EXIT] = BTN_DEFAULT_EXIT;
 }

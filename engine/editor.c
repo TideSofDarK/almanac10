@@ -44,20 +44,45 @@ static inline void clear_axis_gizmos()
     clear_gizmos(&editor.axis_gizmos);
 }
 
-static inline void init_axis_gizmos(Gizmo *gizmo)
+static inline void gizmos_middle_point(Gizmo *gizmos, int *indices, vec3 out)
+{
+    glm_vec_copy(GLM_VEC3_ZERO, out);
+
+    for (int i = 0; i < vector_size(indices); i++)
+    {
+        glm_vec_add(out, gizmos[indices[i]].transform.pos, out);
+    }
+
+    int count = vector_size(indices);
+
+    out[0] /= count;
+    out[1] /= count;
+    out[2] /= count;
+}
+
+static inline void update_axis_gizmos_position()
+{
+    vec3 middle_point = {};
+    gizmos_middle_point(editor.gizmos, editor.selected_gizmos, middle_point);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        glm_vec_copy(middle_point, editor.axis_gizmos[i].transform.pos);
+    }
+}
+
+static inline void init_axis_gizmos()
 {
     clear_axis_gizmos();
+
     for (int i = 0; i < 3; ++i)
     {
         Gizmo axis = {};
-
-        axis.value = &((float *)gizmo->value)[i];
         axis.type = GT_ARROW;
 
         glm_vec4_copy(GIZMO_AXIS_COLOR(i), axis.color);
 
         init_transform(&axis.transform);
-        glm_vec_copy(gizmo->transform.pos, axis.transform.pos);
 
         if (i == 0)
         {
@@ -74,27 +99,37 @@ static inline void init_axis_gizmos(Gizmo *gizmo)
 
         vector_push_back(editor.axis_gizmos, axis);
     }
+
+    update_axis_gizmos_position();
 }
 
-static inline void select_gizmo(int index)
+static inline void select_gizmo(int index, bool add_to_selection)
 {
     /* Unselect previous one */
-    if (editor.selected_gizmo != -1)
+    if (!add_to_selection)
     {
-        glm_vec4_copy(GIZMO_RED, editor.gizmos[editor.selected_gizmo].color);
+        if (vector_size(editor.selected_gizmos) > 0)
+        {
+            for (int i = 0; i < vector_size(editor.selected_gizmos); i++)
+            {
+                glm_vec4_copy(GIZMO_RED, editor.gizmos[editor.selected_gizmos[i]].color);
+            }
+            editor.selected_gizmos = NULL;
 
-        clear_axis_gizmos();
+            clear_axis_gizmos();
+        }
     }
 
-    editor.selected_gizmo = index;
-    glm_vec4_copy(GIZMO_WHITE, editor.gizmos[editor.selected_gizmo].color);
-    init_axis_gizmos(&editor.gizmos[editor.selected_gizmo]);
+    vector_push_back(editor.selected_gizmos, index);
+
+    glm_vec4_copy(GIZMO_WHITE, editor.gizmos[index].color);
+    init_axis_gizmos();
 }
 
-static inline void init_gizmo_position(Gizmo *gizmo, float scale)
+static inline void set_gizmo_position(Gizmo *gizmo, vec3 pos, float scale)
 {
     init_transform(&gizmo->transform);
-    glm_vec_copy(*(vec3 *)gizmo->value, gizmo->transform.pos);
+    glm_vec_copy(pos, gizmo->transform.pos);
     glm_vec_mul(gizmo->transform.pos, (vec3){scale, scale, scale}, gizmo->transform.pos);
 }
 
@@ -106,12 +141,11 @@ static inline void rebuild_terrain_gizmos(Terrain *terrain)
     {
         Gizmo gizmo;
 
-        gizmo.value = terrain->vertices[i].pos;
         gizmo.type = GT_SPHERE;
 
         glm_vec4_copy(GIZMO_RED, gizmo.color);
 
-        init_gizmo_position(&gizmo, (float)terrain->grid_size);
+        set_gizmo_position(&gizmo, terrain->vertices[i].pos, (float)terrain->grid_size);
 
         vector_push_back(editor.gizmos, gizmo);
     }
@@ -121,6 +155,9 @@ static inline void editor_toolbar(struct nk_context *ctx)
 {
     Config config = get_config();
 
+    static const char *editor_modes[] = {"Terrain", "Props", "Creatures"};
+    static const char *axis_modes[] = {"Translate", "Rotate", "Scale"};
+
     float font_size = 19;
     int w = config.w;
     int h = 32;
@@ -129,7 +166,7 @@ static inline void editor_toolbar(struct nk_context *ctx)
     if (nk_begin(ctx, "World Editor", nk_rect((float)start_x, (float)start_y, (float)w, (float)h),
                  NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
     {
-        nk_layout_row_begin(ctx, NK_STATIC, font_size, 3);
+        nk_layout_row_begin(ctx, NK_STATIC, font_size, 5);
         nk_layout_row_push(ctx, 50);
         if (nk_button_label(ctx, "file"))
         {
@@ -142,6 +179,10 @@ static inline void editor_toolbar(struct nk_context *ctx)
         if (nk_button_label(ctx, "view"))
         {
         }
+        nk_layout_row_push(ctx, 100);
+        editor.editor_mode = nk_combo(ctx, editor_modes, NK_LEN(editor_modes), editor.axis_mode, font_size, nk_vec2(100, 200));
+        nk_layout_row_push(ctx, 100);
+        editor.axis_mode = nk_combo(ctx, axis_modes, NK_LEN(axis_modes), editor.axis_mode, font_size, nk_vec2(100, 200));
         nk_layout_row_end(ctx);
     }
     nk_end(ctx);
@@ -151,9 +192,10 @@ void init_editor()
 {
     editor.gizmos = NULL;
     editor.axis_gizmos = NULL;
-    editor.selected_gizmo = -1;
-    editor.drag.gizmo = NULL;
+    editor.selected_gizmos = NULL;
+    editor.drag.dragging = false;
     editor.editor_mode = EM_TERRAIN;
+    editor.axis_mode = AM_TRANSLATE;
     editor.world = NULL;
     editor.previous_world = NULL;
 }
@@ -185,13 +227,13 @@ void update_editor()
     cursor_position(&cx, &cy);
 
     /* Gizmo drag */
-    if (editor.drag.gizmo != NULL)
+    if (editor.drag.dragging)
     {
         if (get_control_state(CT_LMB) == BS_RELEASED)
         {
-            select_gizmo(editor.selected_gizmo);
+            init_axis_gizmos();
 
-            editor.drag.gizmo = NULL;
+            editor.drag.dragging = false;
             px = py = 0;
             return;
         }
@@ -207,23 +249,30 @@ void update_editor()
             px = cx;
             py = cy;
 
-            vec3 r_origin = {}, r_dir = {}, new_pos = {};
+            vec3 r_origin = {}, r_dir = {}, new_pos = {}, offset = {};
             cursor_raycast_custom(camera, cx + editor.drag.offset[0], cy + editor.drag.offset[1], r_origin, r_dir);
 
             vec3 or_origin = {}, or_dir = {};
             cursor_raycast_custom(camera, ox, oy, or_origin, or_dir);
 
-            float distance = glm_vec_distance(editor.drag.gizmo->transform.pos, or_origin);
+            vec3 dragging_gizmos_position = {};
+            gizmos_middle_point(editor.gizmos, editor.selected_gizmos, dragging_gizmos_position);
+
+            float distance = glm_vec_distance(dragging_gizmos_position, or_origin);
             glm_vec_copy(r_origin, new_pos);
             glm_vec_muladds(r_dir, distance, new_pos);
 
-            *(float *)editor.drag.gizmo->value = new_pos[editor.drag.axis] / (float)editor.world->terrain->grid_size;
+            float actual_offset = new_pos[editor.drag.axis] - dragging_gizmos_position[editor.drag.axis];
+
+            for (int i = 0; i < vector_size(editor.selected_gizmos); i++)
+            {
+                editor.gizmos[editor.selected_gizmos[i]].transform.pos[editor.drag.axis] += actual_offset;
+                editor.world->terrain->vertices[editor.selected_gizmos[i]].pos[editor.drag.axis] += actual_offset / (float)editor.world->terrain->grid_size;
+            }
+            
             rebuild_terrain(editor.world->terrain);
 
-            init_gizmo_position(&editor.gizmos[editor.selected_gizmo], (float)editor.world->terrain->grid_size);
-            select_gizmo(editor.selected_gizmo); /* Rebuild axis gizmos positions */
-
-            glm_vec4_copy(GIZMO_WHITE, editor.drag.gizmo->color);
+            update_axis_gizmos_position();
         }
     }
     else if (is_press_or_pressed(CT_LMB)) /* Gizmos hit test */
@@ -264,11 +313,11 @@ void update_editor()
         }
         if (potential_gizmo >= 0)
         {
-            select_gizmo(potential_gizmo);
+            select_gizmo(potential_gizmo, get_control_state(CT_LEFT_SHIFT) == BS_PRESS);
         }
-        else if (editor.selected_gizmo != -1)
+        else if (vector_size(editor.selected_gizmos) > 0)
         {
-            for (size_t i = 0; i < vector_size(editor.axis_gizmos); i++)
+            for (size_t i = 0; i < vector_size(editor.axis_gizmos); i++) /* Axis gizmos hit test */
             {
                 vec3 c_end = {};
                 float scale = transform_distance(camera->transform, editor.axis_gizmos[i].transform) * GIZMO_SCALE;
@@ -277,8 +326,11 @@ void update_editor()
                 if (intersect_ray_cylinder(r_origin, r_end, editor.axis_gizmos[i].transform.pos, c_end,
                                            GIZMO_CYLINDER_RADIUS * scale))
                 {
-                    editor.drag.gizmo = &editor.axis_gizmos[i];
-                    world_to_screen(camera, editor.drag.gizmo->transform.pos, editor.drag.offset);
+                    glm_vec4_copy(GIZMO_WHITE, editor.axis_gizmos[i].color);
+
+                    editor.drag.dragging = true;
+                    gizmos_middle_point(editor.gizmos, editor.selected_gizmos, editor.drag.start);
+                    world_to_screen(camera, editor.drag.start, editor.drag.offset);
                     editor.drag.offset[0] -= cx;
                     editor.drag.offset[1] -= cy;
                     editor.drag.axis = (int)i;

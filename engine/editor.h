@@ -23,6 +23,13 @@ typedef enum
 
 typedef enum
 {
+    AM_TRANSLATE,
+    AM_ROTATE,
+    AM_SCALE
+} AxisMode;
+
+typedef enum
+{
     GT_SPHERE,
     GT_ARROW,
     GT_CYLINDER
@@ -31,7 +38,7 @@ typedef enum
 typedef struct Gizmo
 {
     Transform transform;
-    void *value;
+    //void *value;
     vec4 color;
     GizmoType type;
 } Gizmo;
@@ -41,15 +48,17 @@ typedef struct
     Gizmo *gizmos;
     Gizmo *axis_gizmos;
 
-    int selected_gizmo;
+    int *selected_gizmos;
     struct Drag
     {
-        Gizmo *gizmo;
+        bool dragging;
         vec3 offset;
+        vec3 start;
         int axis;
     } drag;
 
     EditorMode editor_mode;
+    AxisMode axis_mode;
 
     World *world;
     World *previous_world;
