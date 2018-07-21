@@ -269,7 +269,7 @@ void update_editor()
                 editor.gizmos[editor.selected_gizmos[i]].transform.pos[editor.drag.axis] += actual_offset;
                 editor.world->terrain->vertices[editor.selected_gizmos[i]].pos[editor.drag.axis] += actual_offset / (float)editor.world->terrain->grid_size;
             }
-            
+
             rebuild_terrain(editor.world->terrain);
 
             update_axis_gizmos_position();
@@ -315,7 +315,7 @@ void update_editor()
         {
             select_gizmo(potential_gizmo, get_control_state(CT_LEFT_SHIFT) == BS_PRESS);
         }
-        else if (vector_size(editor.selected_gizmos) > 0)
+        else if (vector_size(editor.selected_gizmos) > 0 && is_pressed(CT_LMB))
         {
             for (size_t i = 0; i < vector_size(editor.axis_gizmos); i++) /* Axis gizmos hit test */
             {
